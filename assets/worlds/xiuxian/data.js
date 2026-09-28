@@ -143,6 +143,9 @@
     A('xueluo', '血落混元', 3, 'e', 'q', { qiRate: 0.13, combatPower: 0.04 }, 'jinling:strong', { karmaMax: -350 }, 11000),
     A('minghe', '冥河经', 3, 'e', 's', { offlineEff: 0.12, stonesRate: 0.08 }, 'jubao:strong', { karmaMax: -300 }, 10000),
   ]) ARTS[a.id] = a
+  // 初始自带功法禁止散功：normalize 会强制补回 tuna/juling，散功只会白丢等级
+  ARTS.tuna.noSalvage = true
+  ARTS.juling.noSalvage = true
 
   // ---------- 丹药 ----------
   const pills = [

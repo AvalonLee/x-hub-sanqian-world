@@ -119,6 +119,29 @@
     .talent-card { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; background: var(--well); }
     .talent-card.pos { border-color: var(--good); } .talent-card.neg { border-color: var(--bad); }
     .talent-card.rare { box-shadow: 0 0 0 1px var(--acc) inset; }
+    /* 天赋标签墙（修行页）：汇总行 + chip 网格 + 详情区 */
+    .talent-sum { display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline; margin-bottom: 8px; }
+    .talent-wall { display: flex; flex-wrap: wrap; gap: 6px; }
+    .talent-chip {
+      display: inline-flex; align-items: baseline; gap: 6px; cursor: pointer;
+      border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px;
+      background: var(--well); font-size: 12px; line-height: 1.7; white-space: nowrap;
+    }
+    .talent-chip:hover { border-color: var(--acc); }
+    .talent-chip.pos { border-color: var(--good); } .talent-chip.neg { border-color: var(--bad); }
+    .talent-chip.rare { box-shadow: 0 0 0 1px var(--acc) inset; }
+    .talent-chip.on { background: var(--acc); border-color: var(--acc); color: var(--acc-ink); }
+    .talent-chip.on .tv { opacity: 0.9; }
+    .talent-chip .tv { color: var(--ink2); font-variant-numeric: tabular-nums; }
+    .talent-chip.on .tv { color: inherit; }
+    .talent-detail { margin-top: 8px; padding: 8px 10px; border-radius: 8px; background: var(--well); border: 1px solid var(--line); }
+    /* 功法品阶分组 */
+    .art-group { margin-top: 8px; }
+    .art-group-head { display: flex; align-items: center; gap: 6px; cursor: pointer; padding: 4px 0; border-bottom: 1px solid var(--line); user-select: none; }
+    .art-group-head:hover { color: var(--acc); }
+    .art-group-head .caret { display: inline-block; transition: transform 0.15s; font-size: 10px; }
+    .art-group.collapsed .caret { transform: rotate(-90deg); }
+    .art-group.collapsed .art-group-body { display: none; }
     .world-card { border: 1px solid var(--line); border-radius: 10px; padding: 12px; margin-bottom: 8px; background: var(--well); cursor: pointer; }
     .world-card.on { border-color: var(--acc); box-shadow: 0 0 0 1px var(--acc) inset; }
     .world-card.coming { opacity: 0.5; cursor: default; }
@@ -578,14 +601,35 @@
       const pool = window.SQT_COMMON.positive.concat(window.SQT_COMMON.negative, window.SQT_XIUXIAN.positive, window.SQT_XIUXIAN.negative)
       const byId = {}
       for (const t of pool) byId[t.id] = t
-      $('ro-talents').innerHTML = (state.profile.talents || []).map((t) => {
+      renderTalents(byId)
+    }
+
+    // 天赋标签墙（v0.4.1）：天赋随渡劫累加，整卡竖排会撑高卡片区，改为「汇总行 + chip 网格 + 详情区」
+    let talentSel = null
+    function talentEffectText(t) {
+      const e = t.effects || {}
+      const keys = Object.keys(e).sort((a, b) => Math.abs(e[b]) - Math.abs(e[a]))
+      return keys.slice(0, 2).map((k) => `${FX_NAMES[k] || k} ${e[k] >= 0 ? '+' : ''}${Math.round(e[k] * 100)}%`).join(' · ')
+    }
+    function renderTalents(byId) {
+      const root = $('ro-talents')
+      const list = (state.profile.talents || []).map((t) => {
         const def = byId[t.id]
-        const name = def ? def.name : t.id
         const desc = def ? def.desc : Object.keys(t.effects || {}).map((k) => (FX_NAMES[k] || k) + ' ' + Math.round((t.effects[k] || 0) * 100) + '%').join('，')
-        return `<div class="talent-card ${t.kind === 'positive' ? 'pos' : 'neg'} ${t.tier === 'rare' ? 'rare' : ''}">
-          <b>${name}</b> <span class="mini dim">${t.kind === 'positive' ? '正面' : '负面'}${t.tier === 'rare' ? ' · 稀有' : ''}${t.src === 'gift' ? ' · 天道垂青' : ''}</span>
-          <div class="mini muted">${def ? def.desc : desc}</div></div>`
-      }).join('') || '<div class="mini dim">无</div>'
+        return { t, name: def ? def.name : t.id, desc }
+      })
+      if (!list.length) { root.innerHTML = '<div class="mini dim">无</div>'; return }
+      const pos = list.filter((x) => x.t.kind === 'positive')
+      const neg = list.filter((x) => x.t.kind !== 'positive')
+      const rare = (x) => (x.t.tier === 'rare' ? 0 : 1)
+      const ordered = pos.slice().sort((a, b) => rare(a) - rare(b)).concat(neg.slice().sort((a, b) => rare(a) - rare(b)))
+      const gift = list.filter((x) => x.t.src === 'gift').length
+      if (!talentSel || !ordered.some((x) => x.t.id === talentSel)) talentSel = ordered[0].t.id
+      const sel = ordered.find((x) => x.t.id === talentSel)
+      root.innerHTML = `<div class="talent-sum mini dim"><span>共 <b>${list.length}</b> 条</span><span>正 ${pos.length} / 负 ${neg.length}</span><span>创角 ${list.length - gift} · 天道垂青 ${gift}</span></div>
+        <div class="talent-wall">${ordered.map((x) => `<span class="talent-chip ${x.t.kind === 'positive' ? 'pos' : 'neg'} ${x.t.tier === 'rare' ? 'rare' : ''}${x.t.id === talentSel ? ' on' : ''}" data-t="${x.t.id}"><b>${x.name}</b><span class="tv">${talentEffectText(x.t)}</span></span>`).join('')}</div>
+        <div class="talent-detail mini"><b>${sel.name}</b> <span class="dim">${sel.t.kind === 'positive' ? '正面' : '负面'}${sel.t.tier === 'rare' ? ' · 稀有' : ''}${sel.t.src === 'gift' ? ' · 天道垂青' : ''}</span><div class="muted">${sel.desc}</div></div>`
+      root.querySelectorAll('[data-t]').forEach((el) => el.addEventListener('click', () => { talentSel = el.dataset.t; renderTalents(byId) }))
     }
 
     function renderCulti(ws) {
@@ -667,6 +711,7 @@
     }
 
     let swapMode = null
+    let artCollapsed = [false, false, false, false] // 功法品阶分组折叠态（仅内存，不落盘）
     const FX_NAMES = {
       qiRate: '修为产出', qiCap: '修为上限', offlineEff: '离线收益', combatPower: '战力',
       combatSpeed: '战斗速度', dropRate: '掉落率', stonesRate: '灵石获取', shopCost: '商店价格',
@@ -695,15 +740,23 @@
             <button class="mini" data-out="${i}">移出</button>
           </div></div>`
       }).join('')
-      $('arts-owned').innerHTML = ws.artsKnown.length ? '<div class="slots">' + ws.artsKnown.map((id) => {
+      const TIER_NAMES = ['黄字阶', '玄字阶', '地字阶', '天字阶']
+      const byTier = [[], [], [], []]
+      for (const id of ws.artsKnown) { const a = p.arts[id]; if (a && byTier[a.tier]) byTier[a.tier].push(id) }
+      const ownedCard = (id) => {
         const art = p.arts[id]
         const slotted = ws.slots.includes(id)
         const sig = artSig(art)
+        const canSalvage = !slotted && !art.noSalvage
         return `<div class="slot"><div class="zc-head"><b class="a${art.alignment}">《${art.name}》</b>
           <span class="mini dim">${({ r: '正道', e: '魔道', n: '左道' })[art.alignment]} · 滋养${({ j: '精', q: '气', s: '神' })[art.attr]}${sig ? ' · ' + sig : ''}</span></div>
           <div class="mini dim">Lv.${ws.artsLevels[id] || 0} · ${fxText(art, ws.artsLevels[id] || 0)}</div>
-          <div style="margin-top:6px">${slotted ? '<span class="mini dim">槽内生效中</span>' : `<button class="mini" data-in="${id}" ${ws.slots.includes(null) ? '' : 'disabled'}>装入空槽</button>`}</div></div>`
-      }).join('') + '</div>' : '<div class="mini dim">尚未习得功法，历练掉落或坊市可得。</div>'
+          <div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap">${slotted ? '<span class="mini dim">槽内生效中</span>' : `<button class="mini" data-in="${id}" ${ws.slots.includes(null) ? '' : 'disabled'}>装入空槽</button>`}${canSalvage ? `<button class="mini" data-salvage="${id}">散功 +${H.fmt(SQS.artSalvageValue(art, ws.artsLevels[id] || 0))}</button>` : ''}</div></div>`
+      }
+      $('arts-owned').innerHTML = ws.artsKnown.length ? byTier.map((ids, tier) => !ids.length ? '' :
+        `<div class="art-group${artCollapsed[tier] ? ' collapsed' : ''}"><div class="art-group-head mini" data-g="${tier}"><span class="caret">▼</span><b>${TIER_NAMES[tier]}</b><span class="dim">· ${ids.length} 部</span></div>
+          <div class="art-group-body slots">${ids.map(ownedCard).join('')}</div></div>`).join('')
+        : '<div class="mini dim">尚未习得功法，历练掉落或坊市可得。</div>'
       $('shelf-panel').style.display = ws.shelf.length ? 'block' : 'none'
       $('arts-shelf').innerHTML = ws.shelf.map((id) => {
         const art = p.arts[id]
@@ -713,7 +766,8 @@
         if (r.karmaMax != null) missing.push(`需业障 ≤ ${r.karmaMax}`)
         if (r.attr) missing.push(`需 ${({ j: '精', q: '气', s: '神' })[r.attr.id]} ≥ ${r.attr.min}（现 ${(ws.attrs || {})[r.attr.id] || 0}）`)
         return `<div class="row"><div class="grow"><b class="a${art.alignment}">${art.name}</b> <span class="mini dim">${({ r: '正道', e: '魔道', n: '左道' })[art.alignment]}</span>
-          <div class="mini stale">${missing.join(' · ')}</div></div></div>`
+          <div class="mini stale">${missing.join(' · ')}</div></div>
+          <button class="mini" data-discard="${id}">弃置 +${H.fmt(SQS.artSalvageValue(art, 0))}</button></div>`
       }).join('')
       $('art-slots').querySelectorAll('[data-up]').forEach((b) => b.addEventListener('click', () => SQ.mutate(state, (s) => SQS.artUpgrade(s, s.worlds[s.profile.worldId], b.dataset.up)).then(renderMain)))
       $('art-slots').querySelectorAll('[data-out]').forEach((b) => b.addEventListener('click', () => SQ.mutate(state, (s) => { s.worlds[s.profile.worldId].slots[+b.dataset.out] = null; SQS.recalcDerived(s, s.worlds[s.profile.worldId]) }).then(renderMain)))
@@ -722,6 +776,21 @@
         const empty = w.slots.findIndex((x) => !x)
         if (empty >= 0) { w.slots[empty] = b.dataset.in; SQS.recalcDerived(s, w) }
       }).then(renderMain)))
+      $('arts-owned').querySelectorAll('.art-group-head').forEach((el) => el.addEventListener('click', () => {
+        const tier = +el.dataset.g
+        artCollapsed[tier] = !artCollapsed[tier]
+        el.parentElement.classList.toggle('collapsed', artCollapsed[tier])
+      }))
+      $('arts-owned').querySelectorAll('[data-salvage]').forEach((b) => b.addEventListener('click', () => {
+        const id = b.dataset.salvage
+        const art = p.arts[id]
+        showConfirm(`散功《${art.name}》？返还灵石 ${H.fmt(SQS.artSalvageValue(art, ws.artsLevels[id] || 0))}，此功法将不再持有。`, () => SQ.mutate(state, (s) => SQS.artSalvage(s, s.worlds[s.profile.worldId], id, false)).then(renderMain))
+      }))
+      $('arts-shelf').querySelectorAll('[data-discard]').forEach((b) => b.addEventListener('click', () => {
+        const id = b.dataset.discard
+        const art = p.arts[id]
+        showConfirm(`弃置《${art.name}》？返还灵石 ${H.fmt(SQS.artSalvageValue(art, 0))}，此功法将不再待修习。`, () => SQ.mutate(state, (s) => SQS.artSalvage(s, s.worlds[s.profile.worldId], id, true)).then(renderMain))
+      }))
     }
     function artSig(art) {
       if (!art.special) return ''

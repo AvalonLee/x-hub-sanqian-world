@@ -371,8 +371,14 @@
       if (empty >= 0) ws.slots[empty] = artId
       ;(res_push(res))({ tag: 'skill', msg: `【习得功法】《${art.name}》已入功法栏` })
     } else {
-      ws.shelf.push(artId)
-      ;(res_push(res))({ tag: 'skill', msg: `《${art.name}》暂存待修习（要求未达）` })
+      if (ws.shelf.length >= S.ART_SHELF_CAP) {
+        const v = Math.ceil(S.artBasePrice(art) * 0.5)
+        ws.stones += v
+        ;(res_push(res))({ tag: 'skill', msg: `待修习架已满，《${art.name}》化为灵石 ${v}` })
+      } else {
+        ws.shelf.push(artId)
+        ;(res_push(res))({ tag: 'skill', msg: `《${art.name}》暂存待修习（要求未达）` })
+      }
     }
     S.recalcDerived(s, ws)
   }
@@ -401,6 +407,50 @@
     }
     ws.shelf = still
     SQS.recalcDerived(s, ws)
+  }
+
+  // ---------- G5b 散功（功法处置 · v0.4.1）----------
+  // 返还（灵石）= ceil( base × (1 + 修习等级 × 0.25) )；base = 坊市价 × 0.4，非卖品按品阶定额。
+  // 系数 0.4 < 重复所得 0.5 → 「买入 → 散功」恒亏损，不构成灵石套利回路。
+  S.ART_SALVAGE_BASE = [120, 400, 1500, 6000] // 黄 / 玄 / 地 / 天（非卖品定额）
+  S.ART_SHELF_CAP = 24
+  S.artSalvageValue = function (art, lv) {
+    const base = art.price > 0 ? art.price * 0.4 : (S.ART_SALVAGE_BASE[art.tier] || 120)
+    return Math.ceil(base * (1 + (lv || 0) * 0.25))
+  }
+  // worldId 兜底同 recalcDerived：mutate 通道载入的 ws 无 __worldId，仅 claim 时由 beginClaim 注入
+  function pack_of(s, ws) {
+    return window.SQ.getPack(ws.__worldId || (s && s.profile && s.profile.worldId))
+  }
+  // 可散功：已习 + 未入槽 + 非初始自带（tuna/juling 由 normalize 强制补回，散功只会白丢等级）
+  S.artSalvageable = function (ws, artId, s) {
+    if (!ws.artsKnown.includes(artId)) return false
+    if (ws.slots.includes(artId)) return false
+    const pack = pack_of(s, ws)
+    const art = pack && pack.arts[artId]
+    return !!art && !art.noSalvage
+  }
+  // 散功（artsKnown 非槽内）/ 弃置（shelf）——同一处置口径，返回返还灵石数（0 = 未执行）
+  S.artSalvage = function (s, ws, artId, fromShelf) {
+    const pack = pack_of(s, ws)
+    const art = pack && pack.arts[artId]
+    if (!art) return 0
+    const lv = fromShelf ? 0 : (ws.artsLevels[artId] || 0)
+    if (fromShelf) {
+      const i = ws.shelf.indexOf(artId)
+      if (i < 0) return 0
+      ws.shelf.splice(i, 1)
+    } else {
+      if (!S.artSalvageable(ws, artId, s)) return 0
+      const i = ws.artsKnown.indexOf(artId)
+      if (i >= 0) ws.artsKnown.splice(i, 1)
+      delete ws.artsLevels[artId]
+    }
+    const v = S.artSalvageValue(art, lv)
+    ws.stones += v
+    S.recalcDerived(s, ws)
+    H.pushLog(ws, `${fromShelf ? '弃置' : '散功'}《${art.name}》，化灵石 ${v}`, 'skill')
+    return v
   }
 
   // ---------- G6 商店 ----------
