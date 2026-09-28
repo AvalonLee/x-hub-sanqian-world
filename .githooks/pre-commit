@@ -1,0 +1,43 @@
+#!/bin/sh
+# 三千世界 · pre-commit 钩子：校验「当日变更日志」是否随改动一起提交
+# 规则正典：docs/change/README.md（§七 自查清单 / §八·4 提交钩子）
+#
+# 判定逻辑：
+#   1) 本次提交若无实质改动（只改了 docs/change/ 下的日志）→ 放行；
+#   2) 若改动了 docs/change/ 之外的进仓文件 → 要求 docs/change/<今日>.md 也在本次提交中；
+#   3) 合并 / 变基期间的自动提交 → 跳过校验。
+# 例外：确属无需登记者（如纯仓库配置），用 `git commit --no-verify` 跳过并说明原因。
+
+git_dir=$(git rev-parse --git-dir) || exit 0
+
+# 合并 / 变基期间跳过
+[ -f "$git_dir/MERGE_HEAD" ] && exit 0
+[ -d "$git_dir/rebase-merge" ] && exit 0
+[ -d "$git_dir/rebase-apply" ] && exit 0
+
+staged=$(git diff --cached --name-only --diff-filter=ACMRD)
+[ -z "$staged" ] && exit 0
+
+# 本次暂存中，除变更日志外的文件
+non_log=$(printf '%s\n' "$staged" | grep -v '^docs/change/' || true)
+[ -z "$non_log" ] && exit 0
+
+today="docs/change/$(date +%Y-%m-%d).md"
+
+if ! printf '%s\n' "$staged" | grep -qx "$today"; then
+  echo "" >&2
+  echo "✖ 提交被拦截：本次提交改动了进仓文件，但未包含当日变更日志。" >&2
+  echo "  规则：docs/change/README.md §七（每次变更收尾须登记当日日志，append-only）" >&2
+  echo "" >&2
+  echo "  应登记文件： $today" >&2
+  echo "  本次暂存的实质改动：" >&2
+  printf '%s\n' "$non_log" | sed 's/^/    - /' >&2
+  echo "" >&2
+  echo "  处理方式：" >&2
+  echo "    1) 在 $today 补写条目后 git add 该文件，再重新提交；" >&2
+  echo "    2) 若确属无需登记的例外，用 git commit --no-verify 跳过并说明原因。" >&2
+  echo "" >&2
+  exit 1
+fi
+
+exit 0

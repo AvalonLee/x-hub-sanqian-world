@@ -2,8 +2,8 @@
 
 | 项目 | 内容 |
 |---|---|
-| 版本 | v1.1（2026-09-28：§八·5 远端备份由「可选待办」转 **已完成**——配置公开远端 `origin` 并首次推送 `main`）<br>v1.0（2026-09-28 建立） |
-| 适用范围 | 本扩展目录内**一切进仓文件**——`docs/`、`assets/`、`view/`、`module/`、`manifest.json`、`icon.svg`、`DESIGN-ADDENDUM.md`、`HANDOVER.md` |
+| 版本 | v1.2（2026-09-28：§八·4 提交钩子由「可选待办」转 **已完成**——入库 `.githooks/pre-commit` + `core.hooksPath`；新增根目录 `.gitattributes` 统一行尾为 LF）<br>v1.1（2026-09-28：§八·5 远端备份由「可选待办」转 **已完成**——配置公开远端 `origin` 并首次推送 `main`）<br>v1.0（2026-09-28 建立） |
+| 适用范围 | 本扩展目录内**一切进仓文件**——`docs/`、`assets/`、`view/`、`module/`、`manifest.json`、`icon.svg`、`DESIGN-ADDENDUM.md`、`HANDOVER.md`、`.gitignore`、`.gitattributes`、`.githooks/` |
 | 目的 | ① 随时可查「哪一次、改了哪个文件、改了什么」；② 出问题时能按条目**精准回退** |
 | 登记入口 | 工程规范与验收计划 §九（指向本文件） |
 
@@ -94,11 +94,12 @@
 - [ ] 「回退指引」可直接执行（无 git 时已给可复原信息）
 - [ ] 文档版本号、工程规范 §八 偏差登记已同步
 - [ ] 跨天 / 补记已按 §二 归档
+- [ ] 当日日志已随改动一并 `git add`（**已由 `.githooks/pre-commit` 半自动拦截**，见 §八·4）
 
 ## 八、待完善（可选项，暂不强制）
 
 1. ~~**启用版本控制**（推荐）~~ ✅ **已完成**（2026-09-28）：扩展目录已启用独立 git 仓库（初始提交 `3b76cf6`），回退能力从「手工还原」升级为「一键 revert」。见 §五。
 2. **月度索引**：可增 `docs/change/INDEX.md`，每月一行 + 链接，便于跨月检索（日志文件增多后再考虑）。
 3. **条目编号**：可给条目加 `YYYY-MM-DD-NN` 编号，便于跨条目引用（如「见 2026-09-28-02」）。
-4. **提交钩子（可选）**：可加 `pre-commit` 校验「当日日志文件是否随改动一起提交」，把 §七 自查清单从人工升级为半自动（尚未启用）。
+4. ~~**提交钩子（可选）**~~ ✅ **已完成**（2026-09-28）：`.githooks/pre-commit` 已**入库版本化**（含可执行位），并置 `core.hooksPath=.githooks`。校验规则：本次提交若改动 `docs/change/` **之外**的进仓文件，则必须同时包含 `docs/change/<当日>.md`，否则**拦截**并列出未登记的改动；合并 / 变基期间的自动提交跳过；确属例外用 `git commit --no-verify`。**新克隆后需执行一次**：`git config core.hooksPath .githooks`（该配置存于 `.git/config`，不随仓库分发）。
 5. ~~**远端备份（可选）**~~ ✅ **已完成**（2026-09-28）：已配置远端 `origin` = `https://github.com/AvalonLee/x-hub-sanqian-world`（**公开仓库**），首次推送分支 `main`（提交 `7c85147`）。回退链条由「本地 revert」升级为「本地 revert + 远端留档」；此后每次变更收尾提交后 `git push` 即可。注意：仓库公开，`docs/`、`assets/`、`view/` 内容均可被匿名访问，勿提交密钥/凭据（运行时存档 `.storage.json` 已 gitignore）。

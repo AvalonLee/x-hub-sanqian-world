@@ -1,0 +1,5 @@
+# 三千世界 · 行尾统一（2026-09-28 立）
+# 仓库内一律 LF；Git 自动判定文本 / 二进制（二进制不参与转换）。
+# 目的：消除 Windows(core.autocrlf) 与 Linux/macOS 之间的 CRLF / LF 噪声，
+#       使 diff、revert 与文档比对不受行尾差异干扰。
+* text=auto eol=lf
