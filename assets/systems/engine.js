@@ -284,7 +284,9 @@
         let back = 0
         if (cur) back = S.salvage(s, ws, cur)
         ws.gear[it.slot] = it
-        ;(res_push(opts.res))({ tag: 'gear', msg: `拾得 ${it.name}（${pack_tier(ws, it.tier)}）→ 已替换${back ? `，炼化 +${back} 灵石` : ''}${it.special ? '〔' + specialName(ws, it.special) + '〕' : ''}` })
+        const msg = `拾得 ${it.name}（${pack_tier(ws, it.tier)}）→ 已替换${back ? `，炼化 +${back} 灵石` : ''}${it.special ? '〔' + specialName(ws, it.special) + '〕' : ''}`
+        ;(res_push(opts.res))({ tag: 'gear', msg })
+        H.pushLog(ws, msg, 'gear') // 换装是状态变更 → 落日志；纯炼化（下一分支）高频不落
         S.recalcDerived(s, ws)
         return { equipped: true, item: it }
       }
@@ -300,9 +302,13 @@
       for (let i = 1; i < ws.stash.length; i++) if (S.score(ws.stash[i]) < S.score(ws.stash[minI])) minI = i
       const out = ws.stash.splice(minI, 1)[0]
       const v = S.salvage(s, ws, out)
-      ;(res_push(opts.res))({ tag: 'gear', msg: `库藏阁已满，炼化 ${out.name} +${v} 灵石` })
+      const msg = `库藏阁已满，炼化 ${out.name} +${v} 灵石`
+      ;(res_push(opts.res))({ tag: 'gear', msg })
+      H.pushLog(ws, msg, 'gear')
     }
-    ;(res_push(opts.res))({ tag: 'gear', msg: `拾得 ${it.name}（${pack_tier(ws, it.tier)}）→ 境界不足（需 ${realmName(ws, it.reqs.realm)}），已入库藏阁${it.special ? '〔' + specialName(ws, it.special) + '〕' : ''}` })
+    const msg2 = `拾得 ${it.name}（${pack_tier(ws, it.tier)}）→ 境界不足（需 ${realmName(ws, it.reqs.realm)}），已入库藏阁${it.special ? '〔' + specialName(ws, it.special) + '〕' : ''}`
+    ;(res_push(opts.res))({ tag: 'gear', msg: msg2 })
+    H.pushLog(ws, msg2, 'gear')
     return { stashed: true, item: it }
   }
   function res_push(res) {
@@ -323,7 +329,9 @@
         if (!cur || S.score(it) > S.score(cur)) {
           if (cur) S.salvage(s, ws, cur)
           ws.gear[it.slot] = it
-          ;(res_push(res))({ tag: 'gear', msg: `境界提升：库藏阁 ${it.name} 达标，已自动装备` })
+          const msg = `境界提升：库藏阁 ${it.name} 达标，已自动装备`
+          ;(res_push(res))({ tag: 'gear', msg })
+          H.pushLog(ws, msg, 'gear')
         } else keep.push(it)
       } else keep.push(it)
     }
@@ -460,7 +468,9 @@
     if (ws.shop.nextRestock && now >= ws.shop.nextRestock) {
       S.shopRestock(s, ws)
       ws.shop.feeIdx = 0 // 自动补货周期重置阶梯刷新费
-      ;(res_push(res))({ tag: 'shop', msg: `【${pack.lexicon.shopSystem}】补货上新` })
+      const msg = `【${pack.lexicon.shopSystem}】补货上新`
+      ;(res_push(res))({ tag: 'shop', msg })
+      H.pushLog(ws, msg, 'shop')
     }
   }
   S.shopRestock = function (s, ws) {
@@ -529,6 +539,7 @@
     ws.shop.feeIdx = H.clamp((ws.shop.feeIdx || 0) + 1, 0, 4)
     S.shopRestock(s, ws)
     S.recalcDerived(s, ws)
+    H.pushLog(ws, `刷新坊市，耗灵石 ${fee}`, 'shop')
     return { ok: true, fee }
   }
   S.buyGoods = function (s, ws, idx, res) {
@@ -546,6 +557,8 @@
     if (ws.stones < price) return { ok: false, poor: true, price }
     ws.stones -= price
     ws.shop.goods.splice(idx, 1)
+    // 购买是玩家操作 → 瞬时提示 + 落日志（坊市页据此可回溯）
+    const push = (msg) => { (res_push(res))({ tag: 'shop', msg }); H.pushLog(ws, msg, 'shop') }
     if (g.kind === 'gear') {
       const it = g.item
       const meets = it.reqs.realm <= ws.realm || it.special === 'ignore_req'
@@ -554,24 +567,26 @@
         if (!cur || S.score(it) > S.score(cur)) {
           if (cur) S.salvage(s, ws, cur)
           ws.gear[it.slot] = it
-          ;(res_push(res))({ tag: 'shop', msg: `购得 ${it.name}（${pack_tier(ws, it.tier)}）→ 已自动装备` })
+          push(`购得 ${it.name}（${pack_tier(ws, it.tier)}）→ 已自动装备`)
         } else {
           const v = S.salvage(s, ws, it)
-          ;(res_push(res))({ tag: 'shop', msg: `购得 ${it.name} → 不合用，炼化 +${v} 灵石` })
+          push(`购得 ${it.name} → 不合用，炼化 +${v} 灵石`)
         }
       } else {
         ws.stash.push(it)
-        ;(res_push(res))({ tag: 'shop', msg: `购得 ${it.name} → 境界不足，入库藏阁` })
+        push(`购得 ${it.name} → 境界不足，入库藏阁`)
       }
       S.recalcDerived(s, ws)
     } else if (g.kind === 'pill') {
       S.applyFx(s, ws, g.pill.fx, res, { scale: false })
+      push(`购得丹药「${g.pill.name}」`)
     } else if (g.kind === 'art') {
+      push(`购得功法《${window.SQ.getPack(ws.__worldId).arts[g.artId].name}》`)
       S.gainArt(s, ws, g.artId, res)
     } else if (g.kind === 'treasure') {
       if (window.SQXT.grant(ws, g.tid)) {
         const def = window.SQXT.byId[g.tid]
-        ;(res_push(res))({ tag: 'shop', msg: `购得法宝「${def.name}」（${def.grade}）` })
+        push(`购得法宝「${def.name}」（${def.grade}）`)
         S.recalcDerived(s, ws)
       } else {
         ws.stones += price // 并发已持有：退款
@@ -582,7 +597,7 @@
       ws.qi -= take
       const got = Math.round(take * 0.6 + 50)
       ws.stones += got
-      ;(res_push(res))({ tag: 'shop', msg: `灵气转灵石：- ${H.fmt(take)} 灵气，+ ${got} 灵石` })
+      push(`灵气转灵石：- ${H.fmt(take)} 灵气，+ ${got} 灵石`)
     }
     return { ok: true, price }
   }

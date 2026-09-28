@@ -43,7 +43,8 @@
       return `${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`
     },
     pushLog(ws, msg, tag) {
-      ws.log = [{ t: Date.now(), msg, tag: tag || 'sys' }].concat(ws.log || []).slice(0, 50)
+      // 上限 200（v0.4.2）：原 50 条下，低频条目（奇遇 / 渡劫 / 补货）会被高频条目挤出窗口
+      ws.log = [{ t: Date.now(), msg, tag: tag || 'sys' }].concat(ws.log || []).slice(0, 200)
     },
     dd(src, def) { // deep-default：按 def 形状补齐 src 缺字段（一层对象 + 基础值）
       const out = src && typeof src === 'object' ? src : {}
