@@ -1,0 +1,8 @@
+# 运行时存档（宿主注入 / 无宿主预览降级落盘，随玩法持续变动，不入库）
+.storage.json
+
+# 系统与编辑器噪声
+Thumbs.db
+Desktop.ini
+.DS_Store
+*.log

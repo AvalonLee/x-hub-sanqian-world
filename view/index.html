@@ -1,0 +1,1132 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>三千世界</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --surface: var(--xhub-surface, rgba(255,255,255,0.66));
+      --well: var(--xhub-bg-card, rgba(255,255,255,0.9));
+      --ink: var(--xhub-text-1, #1f2230);
+      --ink2: var(--xhub-text-2, #5b6070);
+      --ink3: var(--xhub-text-3, #9298a8);
+      --line: var(--xhub-border, rgba(0,0,0,0.1));
+      --acc: var(--xhub-accent, #8a6d1d);
+      --acc-ink: #fff;
+      --t0: #8a8f9c; --t1: #2f9e6e; --t2: #3b6db4; --t3: #8a4fbf; --t4: #b8860b;
+      --kr: var(--xhub-yellow, #b8860b); --ke: var(--xhub-red, #c0392b); --kn: var(--xhub-text-3, #8a8f9c);
+      --good: var(--xhub-green, #2f9e44); --bad: var(--xhub-red, #c0392b);
+      --radius: var(--xhub-radius-lg, 12px);
+    }
+    :root[data-xhub-theme="dark"] {
+      color-scheme: dark;
+      --surface: var(--xhub-surface, rgba(255,255,255,0.06));
+      --well: var(--xhub-bg-card, rgba(255,255,255,0.04));
+      --ink: var(--xhub-text-1, #e8e9f0);
+      --ink2: var(--xhub-text-2, #a2a7b8);
+      --ink3: var(--xhub-text-3, #6f7484);
+      --line: var(--xhub-border, rgba(255,255,255,0.12));
+      --acc: var(--xhub-accent, #d4af37);
+      --acc-ink: #101018;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0; height: 100vh; overflow: hidden;
+      background: var(--xhub-page-bg, transparent); color: var(--ink);
+      font-family: system-ui, "Songti SC", SimSun, serif; font-size: 13px;
+      display: flex;
+    }
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-thumb { background: var(--line); border-radius: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+
+    .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; }
+    :root[data-xhub-wallpaper-clear="1"] .panel { border-color: transparent; box-shadow: 0 6px 20px rgba(0,0,0,0.18); text-shadow: 0 1px 2px rgba(0,0,0,0.35); }
+    button { font: inherit; color: var(--ink); background: var(--well); border: 1px solid var(--line); border-radius: 8px; padding: 6px 12px; cursor: pointer; }
+    button:hover:not(:disabled) { border-color: var(--acc); }
+    button:disabled { opacity: 0.45; cursor: default; }
+    .btn-p { background: var(--acc); border-color: var(--acc); color: var(--acc-ink); }
+    input[type=text] { font: inherit; color: var(--ink); background: var(--well); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; width: 100%; }
+    .muted { color: var(--ink2); } .dim { color: var(--ink3); }
+    .bar { height: 8px; border-radius: 4px; background: var(--well); border: 1px solid var(--line); overflow: hidden; }
+    .bar > i { display: block; height: 100%; width: 0; background: var(--acc); transition: width 0.4s; }
+    .row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-top: 1px solid var(--line); }
+    .row:first-child { border-top: none; }
+    .grow { flex: 1; min-width: 0; }
+    .mini { font-size: 12px; }
+    .stale { color: var(--bad); }
+    .chip { padding: 2px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--well); font-size: 12px; white-space: nowrap; }
+    .kr-r { color: var(--kr); border-color: var(--kr); } .kr-e { color: var(--ke); border-color: var(--ke); } .kr-n { color: var(--kn); }
+
+    /* ---------- 左侧信息栏 ---------- */
+    #side {
+      width: 218px; flex: none; min-height: 0;
+      display: flex; flex-direction: column;
+      padding: 14px 12px 10px;
+      border-right: 1px solid var(--line);
+      background: var(--surface);
+    }
+    .brand { display: flex; align-items: center; gap: 10px; padding: 2px 4px 12px; }
+    .brand-seal {
+      width: 32px; height: 32px; flex: none;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--acc); color: var(--acc-ink);
+      border-radius: 7px; font-size: 17px; font-weight: 700;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.14);
+    }
+    .brand-txt b { display: block; font-size: 15px; letter-spacing: 3px; line-height: 1.3; }
+    .brand-txt span { display: block; font-size: 11px; letter-spacing: 1px; margin-top: 1px; }
+
+    #topbar { display: flex; flex-direction: column; gap: 8px; padding: 0 4px 12px; border-bottom: 1px solid var(--line); }
+    #tb-name { font-weight: 650; line-height: 1.5; word-break: break-all; cursor: pointer; }
+    .side-res { display: flex; flex-wrap: wrap; gap: 6px; }
+
+    #tabs { display: flex; flex-direction: column; gap: 2px; padding-top: 10px; flex: 1; min-height: 0; overflow-y: auto; }
+    #tabs button {
+      display: flex; align-items: center; gap: 10px;
+      border: none; background: transparent; border-radius: 8px;
+      padding: 9px 10px; text-align: left; font-size: 13px; letter-spacing: 2px; color: var(--ink2);
+    }
+    #tabs button:hover:not(:disabled) { background: var(--well); border-color: transparent; color: var(--ink); }
+    #tabs button.on { background: var(--well); color: var(--acc); font-weight: 650; box-shadow: inset 2px 0 0 var(--acc); }
+    #tabs .idx {
+      width: 19px; height: 19px; flex: none;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; letter-spacing: 0; border-radius: 5px;
+      border: 1px solid var(--line); color: var(--ink3);
+    }
+    #tabs button.on .idx { border-color: var(--acc); color: var(--acc); }
+    .side-foot { padding: 10px 4px 0; border-top: 1px solid var(--line); }
+
+    /* ---------- 右侧内容区 ---------- */
+    #content { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+    #main {
+      flex: 1; min-height: 0; overflow-y: auto;
+      padding: 14px 16px 20px;
+      display: flex; flex-direction: column; gap: 10px;
+      max-width: 900px; width: 100%; margin: 0 auto;
+    }
+    .tab { display: none; flex-direction: column; gap: 12px; } .tab.on { display: flex; }
+
+    /* 创角 */
+    #creation { flex: 1; min-height: 0; overflow-y: auto; display: flex; align-items: center; justify-content: center; padding: 20px; }
+    .cr-card { width: 100%; max-width: 420px; }
+    .cr-card h1 { margin: 0 0 10px; font-size: 20px; letter-spacing: 2px; position: relative; padding-bottom: 10px; }
+    .cr-card h1::after { content: ''; position: absolute; left: 0; bottom: 0; width: 36px; height: 2px; background: var(--acc); border-radius: 1px; }
+    .talent-card { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; background: var(--well); }
+    .talent-card.pos { border-color: var(--good); } .talent-card.neg { border-color: var(--bad); }
+    .talent-card.rare { box-shadow: 0 0 0 1px var(--acc) inset; }
+    .world-card { border: 1px solid var(--line); border-radius: 10px; padding: 12px; margin-bottom: 8px; background: var(--well); cursor: pointer; }
+    .world-card.on { border-color: var(--acc); box-shadow: 0 0 0 1px var(--acc) inset; }
+    .world-card.coming { opacity: 0.5; cursor: default; }
+
+    /* 修行页核心区：宽屏双栏（状态/渡劫 左，修为 右） */
+    .core { display: flex; flex-direction: column; gap: 10px; }
+    @media (min-width: 1100px) {
+      .core {
+        display: grid; gap: 10px;
+        grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+        grid-template-areas: "status qi" "trib qi";
+      }
+      .p-status { grid-area: status; } .p-qi { grid-area: qi; } .p-trib { grid-area: trib; }
+    }
+    .qi-label { font-size: 12px; color: var(--ink3); letter-spacing: 3px; text-align: center; }
+    .qi-big { font-size: 26px; font-weight: 650; margin: 6px 0; text-align: center; font-variant-numeric: tabular-nums; }
+    .qi-center { text-align: center; }
+
+    /* 修行页分区卡片（属性/天赋/秘境/功法 常显，宽屏两列） */
+    .sub-grid { display: flex; flex-direction: column; gap: 10px; }
+    @media (min-width: 1100px) {
+      .sub-grid { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); align-items: start; }
+    }
+    .sec-head { display: flex; align-items: center; gap: 9px; margin-bottom: 10px; font-weight: 650; color: var(--ink2); letter-spacing: 1px; }
+    .sec-head::before { content: ''; width: 3px; height: 13px; border-radius: 2px; background: var(--acc); opacity: 0.85; flex: none; }
+    .sec-head .sh-hint { margin-left: auto; font-weight: 400; letter-spacing: 0; }
+    #zone-list { display: grid; gap: 8px; }
+    @media (min-width: 1100px) { #zone-list { grid-template-columns: 1fr 1fr; } }
+    .zcard { background: var(--well); border: 1px solid var(--line); border-radius: 10px; padding: 9px 11px; }
+    .zcard.on { border-color: var(--acc); box-shadow: inset 0 0 0 1px var(--acc); }
+    .zcard[data-zone]:hover { border-color: var(--acc); }
+    .zc-head { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .sh-grip { margin-left: 6px; cursor: grab; color: var(--ink3); font-weight: 400; user-select: none; }
+    .sub-grid > .panel.dragging { opacity: 0.45; outline: 1px dashed var(--acc); }
+    .btn-danger { color: var(--bad); border-color: var(--bad); }
+    #shop-list { display: grid; gap: 8px; grid-template-columns: 1fr; }
+    @media (min-width: 880px) { #shop-list { grid-template-columns: 1fr 1fr; } }
+
+    /* 属性总览卡 */
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+    .stat { background: var(--well); border: 1px solid var(--line); border-radius: 10px; padding: 10px 6px; text-align: center; }
+    .stat .k { font-size: 11px; color: var(--ink3); letter-spacing: 2px; }
+    .stat .v { font-size: 20px; font-weight: 650; margin: 3px 0 2px; font-variant-numeric: tabular-nums; }
+    .stat .s { font-size: 10px; color: var(--ink3); }
+    @media (max-width: 640px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+
+    /* 品阶色 */
+    .t0 { color: var(--t0); } .t1 { color: var(--t1); } .t2 { color: var(--t2); } .t3 { color: var(--t3); } .t4 { color: var(--t4); }
+    .ar { color: var(--kr); } .ae { color: var(--ke); } .an { color: var(--kn); }
+
+    /* 模态 */
+    #modal { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: none; align-items: center; justify-content: center; z-index: 50; padding: 16px; }
+    #modal.on { display: flex; }
+    #modal .box { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; max-width: 440px; width: 100%; max-height: 80vh; overflow-y: auto; }
+    #trib { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 60; }
+    #trib.on { display: flex; }
+    #trib .msg { color: #fff; font-size: 22px; letter-spacing: 4px; text-align: center; }
+    #trib.ok .msg { color: #ffd700; } #trib.no .msg { color: #ff6b6b; }
+    #toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%); background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 8px 16px; z-index: 40; display: none; max-width: 90vw; }
+    .slots { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .slot { background: var(--well); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; }
+    .goods { background: var(--well); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; }
+    .log-list { margin: 0; padding: 0; list-style: none; font-size: 12px; color: var(--ink2); max-height: 50vh; overflow-y: auto; }
+    .log-list li { padding: 4px 0; border-top: 1px solid var(--line); display: flex; gap: 8px; }
+    .log-list .t { color: var(--ink3); white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+    /* ---------- 窄窗降级：侧栏折叠为顶栏 ---------- */
+    @media (max-width: 880px) {
+      body { flex-direction: column; }
+      #side { width: 100%; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 12px; border-right: none; border-bottom: 1px solid var(--line); }
+      .brand { padding: 0; }
+      .brand-seal { width: 26px; height: 26px; font-size: 14px; }
+      .brand-txt span { display: none; }
+      #topbar { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 8px; padding: 0; border-bottom: none; flex: 1; min-width: 0; }
+      #tb-name { font-size: 12px; }
+      #tabs { flex-direction: row; padding-top: 0; flex: none; overflow-x: auto; }
+      #tabs button { padding: 7px 10px; letter-spacing: 1px; }
+      #tabs .idx { display: none; }
+      .side-foot { display: none; }
+      #main { padding: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <aside id="side">
+    <div class="brand">
+      <span class="brand-seal">仙</span>
+      <div class="brand-txt"><b>三千世界</b><span class="dim">放置修仙 · 万界轮转</span></div>
+    </div>
+
+    <div id="topbar" style="display:none">
+      <div class="who" id="tb-name">--</div>
+      <div class="side-res">
+        <span class="chip" id="tb-karma">左道</span>
+        <span class="chip" id="tb-lingyun">--</span>
+        <span class="chip" id="tb-stones">--</span>
+      </div>
+      <button class="mini" id="btn-help">玩法</button>
+    </div>
+
+    <nav id="tabs" style="display:none">
+      <button data-t="culti" class="on"><span class="idx">壹</span><span>修行</span></button>
+      <button data-t="gear"><span class="idx">贰</span><span>法器</span></button>
+      <button data-t="treasure"><span class="idx">叁</span><span>法宝</span></button>
+      <button data-t="shop"><span class="idx">肆</span><span>坊市</span></button>
+      <button data-t="log"><span class="idx">伍</span><span>日志</span></button>
+      <button data-t="settings"><span class="idx">陆</span><span>设置</span></button>
+    </nav>
+
+    <div class="side-foot dim mini">道可道，非常道</div>
+  </aside>
+
+  <div id="content">
+    <div id="creation" style="display:none"><div class="cr-card panel" id="cr-body"></div></div>
+
+    <div id="main" style="display:none">
+      <div class="tab on" id="tab-culti">
+        <div class="core">
+          <div class="panel p-status">
+            <div class="row" style="border-top:none">
+              <span class="muted">当前状态</span>
+              <span class="grow"></span>
+              <button class="mini" id="mode-culti">打坐修炼</button>
+              <button class="mini" id="mode-combat">秘境历练</button>
+            </div>
+            <div class="mini dim" id="mode-hint">--</div>
+            <div id="cz-mini" style="display:none;margin-top:8px">
+              <div class="row" style="border-top:none;padding:0"><span class="mini" id="cz-name">--</span><span class="grow"></span><span class="mini dim" id="cz-prog">--</span></div>
+              <div class="bar" style="margin-top:4px"><i id="cz-bar"></i></div>
+            </div>
+          </div>
+          <div class="panel p-qi qi-center">
+            <div class="qi-label">打坐 · 吐纳</div>
+            <div class="qi-big" id="cu-qi">--</div>
+            <div class="bar"><i id="cu-bar"></i></div>
+            <div class="mini muted" id="cu-cap" style="margin-top:4px">--</div>
+            <div class="mini qi-center" style="margin-top:8px"><span class="muted">产出</span> <b id="cu-rate">--</b><span id="cu-detail-toggle" class="dim" style="cursor:pointer">（明细 ▾）</span></div>
+            <div class="mini qi-center" style="margin-top:6px"><span class="muted">灵蕴</span> <b id="cu-ly">--</b> <span class="dim mini" id="cu-ly-rate">--</span><span class="dim mini">（功法升级消耗）</span></div>
+            <div id="cu-detail" class="mini dim" style="display:none;text-align:left;margin-top:6px"></div>
+          </div>
+          <div class="panel p-trib">
+            <div class="row" style="border-top:none"><span class="muted">下一境界</span><b id="cu-next">--</b><span class="grow"></span><span class="mini dim" id="cu-need">--</span></div>
+            <div class="row"><span class="muted">渡劫预估</span><b id="cu-p">--</b><span class="grow"></span><span class="mini dim" id="cu-trib-detail-toggle" style="cursor:pointer">明细 ▾</span></div>
+            <div id="cu-trib-detail" class="mini dim" style="display:none"></div>
+            <div style="margin-top:10px;text-align:center">
+              <button class="btn-p" id="btn-break" disabled style="padding:10px 26px;font-size:14px">渡劫突破</button>
+            </div>
+          </div>
+        </div>
+        <div class="sub-grid">
+          <div class="panel" data-card="attrs" draggable="true">
+            <div class="sec-head">角色 · 属性<span class="sh-grip" style="margin-left:auto" title="拖动调整卡片顺序">⠿</span></div>
+            <div class="stats">
+              <div class="stat"><div class="k">战力</div><div class="v" id="ro-atk">--</div><div class="s">境界 + 法器</div></div>
+              <div class="stat"><div class="k">精</div><div class="v" id="ro-jing">--</div><div class="s">主战力判定</div></div>
+              <div class="stat"><div class="k">气</div><div class="v" id="ro-qi">--</div><div class="s">主修为判定</div></div>
+              <div class="stat"><div class="k">神</div><div class="v" id="ro-shen">--</div><div class="s">主心志判定</div></div>
+            </div>
+            <div class="mini dim" id="ro-attrs-note" style="margin-top:6px"></div>
+          </div>
+          <div class="panel" data-card="talents" draggable="true">
+            <div class="sec-head">天赋<span class="sh-hint mini dim">创角锁定 + 天道垂青，永久生效</span><span class="sh-grip" title="拖动调整卡片顺序">⠿</span></div>
+            <div id="ro-talents"></div>
+          </div>
+          <div class="panel" data-card="zones" draggable="true">
+            <div class="sec-head">秘境历练<span class="sh-hint mini dim">点击秘境切换</span><span class="sh-grip" title="拖动调整卡片顺序">⠿</span></div>
+            <div id="zone-list"></div>
+            <div class="mini dim" style="margin-top:8px">瓶颈时击杀放缓、进度封顶 90；通关必掉法器且品阶上浮，首通更赠先天法宝。</div>
+          </div>
+          <div class="panel" data-card="arts" draggable="true">
+            <div class="sec-head">功法<span class="sh-hint mini dim">6 槽 · 槽内生效 · 升级耗灵蕴</span><span class="sh-grip" title="拖动调整卡片顺序">⠿</span></div>
+            <div class="slots" id="art-slots"></div>
+            <div class="mini muted" style="margin:10px 0 4px">已习功法</div>
+            <div id="arts-owned"></div>
+            <div id="shelf-panel" style="display:none;margin-top:8px"><div class="mini dim" style="margin-bottom:4px">待修习（要求未达，红字为缺项）</div><div id="arts-shelf"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab" id="tab-gear">
+        <div class="panel">
+          <div class="sec-head">已佩戴<span class="sh-hint mini dim">自动择优 · 评分 = 攻 + 灵×100 + 抗×0.5 + 亲×3</span></div>
+          <div class="slots" id="gear-slots"></div>
+        </div>
+        <div class="panel" id="stash-panel" style="display:none">
+          <div class="sec-head">库藏阁<span class="sh-hint mini dim">境界不足暂存 · 容量 12 · 突破后自动复检</span></div>
+          <div class="slots" id="gear-stash"></div>
+        </div>
+      </div>
+
+      <div class="tab" id="tab-treasure">
+        <div class="panel">
+          <div class="sec-head">法宝栏<span class="sh-hint mini dim">三格 · 练气 / 金丹 / 化神 解锁 · 先天后天共用 · 唯一性</span></div>
+          <div class="slots" id="tslots"></div>
+        </div>
+        <div class="panel" id="tding" style="display:none">
+          <div class="sec-head">阴阳乾坤鼎<span class="sh-hint mini dim">造化 · 灵气与灵石互转</span></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="mini" id="t-conv-qi">灵气 → 灵石（1:1，转当前灵气 25%）</button>
+            <button class="mini" id="t-conv-dan">100 灵石 → 聚灵丹（产出 +50%，1 小时）</button>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="sec-head">法宝库<span class="sh-hint mini dim">后天祭炼（30% 失败降 1 级） · 先天认主（渡劫胜场进阶）</span></div>
+          <div id="towned"></div>
+        </div>
+        <div class="panel">
+          <div class="sec-head">法宝图鉴<span class="sh-hint mini dim">先天 12 · 后天 18，共 30 件</span></div>
+          <div id="tcodex"></div>
+        </div>
+      </div>
+
+      <div class="tab" id="tab-shop">
+        <div class="panel">
+          <div class="row" style="border-top:none">
+            <span class="muted" id="shop-hint">--</span><span class="grow"></span>
+            <button id="btn-refresh" class="mini">刷新</button>
+          </div>
+          <div id="shop-list"></div>
+        </div>
+      </div>
+
+      <div class="tab" id="tab-log">
+        <div class="panel">
+          <div style="margin-bottom:8px;display:flex;gap:6px;flex-wrap:wrap" id="log-chips"></div>
+          <ul class="log-list" id="log-list"></ul>
+        </div>
+      </div>
+
+      <div class="tab" id="tab-settings">
+        <div class="panel">
+          <div class="sec-head">存档</div>
+          <div class="mini dim" id="save-hint">--</div>
+          <div class="mini dim" style="margin-top:6px">存档自动保存于本机（x-hub 扩展存储），随应用数据保留；卸载扩展不影响存档。</div>
+        </div>
+        <div class="panel">
+          <div class="sec-head">重置存档<span class="sh-hint mini stale">不可恢复</span></div>
+          <div class="mini dim">清空角色、境界、法器、法宝、功法与坊市，回到创角流程。需两步确认，3 秒内未确认自动还原。</div>
+          <div style="margin-top:10px"><button class="btn-danger" id="btn-reset">重置存档</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal"><div class="box" id="modal-box"></div></div>
+  <div id="trib"><div class="msg" id="trib-msg"></div></div>
+  <div id="toast"></div>
+
+  <script src="../assets/core.js"></script>
+  <script src="../assets/systems/engine.js"></script>
+  <script src="../assets/talents/common.js"></script>
+  <script src="../assets/talents/xiuxian.js"></script>
+  <script src="../assets/events/common.js"></script>
+  <script src="../assets/worlds/xiuxian/data.js"></script>
+  <script src="../assets/worlds/xiuxian/treasures.js"></script>
+  <script src="../assets/worlds/xiuxian/events.js"></script>
+  <script src="../assets/worlds/xiuxian/karma.js"></script>
+  <script src="../assets/worlds/xiuxian/index.js"></script>
+  <script src="../assets/worlds/registry.js"></script>
+  <script src="../assets/naming.js"></script>
+  <script>
+    const SQ = window.SQ, H = window.SQH, SQS = window.SQS
+    let state = null
+    let screen = 'LOADING'
+    let cr = { step: 1, name: '', talents: null, worldId: 'xiuxian', worldName: '' }
+    let curTab = 'culti', logFilter = 'all'
+    const $ = (id) => document.getElementById(id)
+    const pack = () => SQ.getPack(state.profile.worldId)
+    const bind = () => { const ws = state.worlds[state.profile.worldId]; ws.__worldId = state.profile.worldId; ws.__profile = state.profile; return ws }
+
+    // ---------- 词表 ----------
+    function L() { return pack() ? pack().lexicon : {} }
+    function realmName(i) { const p = pack(); return (p.realms[i] || p.realms[0]).name }
+
+    // ---------- boot ----------
+    let booted = false
+    async function boot() {
+      // 重试 ×3：宿主重新挂载 iframe 时桥/存储可能瞬时不响应
+      let lastErr = null
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+          const loaded = await SQ.load()
+          state = loaded.state
+          lastErr = null
+          break
+        } catch (e) { lastErr = e; await new Promise((r) => setTimeout(r, 600)) }
+      }
+      if (lastErr) { showBootError('读取存档失败：' + (lastErr.message || lastErr)); return }
+      // 用户自定义卡片顺序（持久化于扩展存储）
+      const ui = await uiStoreGet()
+      if (ui && ui.cardOrder) applyCardOrder(ui.cardOrder)
+      bindCardDnD()
+      if (!SQ.created(state)) { screen = 'CREATE'; cr.step = 1; renderCreate() }
+      else { screen = 'MAIN'; booted = true; renderMain() }
+      SQ.bindPagehideSave(state)
+      // 宿主切换/恢复前台时强制重绘（防 WebView2 挂起后渲染停滞）
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible' && screen === 'MAIN' && state) {
+          try { renderMain() } catch (e) { console.error(e) }
+        }
+      })
+      setInterval(loop, 1000)
+    }
+
+    // 启动看门狗：8 秒未完成 boot（桥挂起等）→ 显示可见错误 + 重试按钮，绝不静默空白
+    setTimeout(() => { if (!booted && screen !== 'CREATE') showBootError('启动超时：扩展桥未在预期时间内响应（可点重试）') }, 8000)
+
+    function showBootError(msg) {
+      if (booted) return
+      document.body.innerHTML = `<div style="min-height:100vh;display:flex;align-items:center;justify-content:center">
+        <div style="max-width:420px;padding:20px;text-align:center;font-family:system-ui">
+          <p style="font-weight:650">启动异常</p>
+          <p style="font-size:12px;color:#888;word-break:break-all">${String(msg).slice(0, 200)}</p>
+          <button style="margin-top:12px;padding:8px 20px" onclick="location.reload()">重新加载</button>
+        </div></div>`
+    }
+
+    async function loop() {
+      if (screen !== 'MAIN') return
+      try {
+        const res = await SQ.claim(state)
+        renderMain()
+        if (res.tribulations && res.tribulations.length) showTrib(res.tribulations[res.tribulations.length - 1])
+        if (res.pendingChoice) showChoice(res.pendingChoice.event)
+        if (res.__entries && res.__entries.length) toast(res.__entries[res.__entries.length - 1].msg)
+      } catch (e) {
+        console.error('claim/render 失败：', e) // 单次结算失败不终止循环，下一秒重试
+      }
+    }
+
+    // ---------- 创角三屏 ----------
+    function renderCreate() {
+      $('creation').style.display = 'flex'; $('main').style.display = 'none'
+      $('topbar').style.display = 'none'; $('tabs').style.display = 'none'
+      const b = $('cr-body')
+      if (cr.step === 1) {
+        b.innerHTML = `<h1>道名初定</h1><p class="muted mini">此后千劫万世，皆以此名行之。</p>
+          <input type="text" id="cr-name" maxlength="8" placeholder="请输入角色名（2~8 字）" value="${cr.name}" />
+          <div style="display:flex;gap:8px;margin-top:12px">
+            <button id="cr-rand" class="grow">掷杯问名</button>
+            <button id="cr-next" class="btn-p">下一步：观天赋</button>
+          </div><p class="dim mini" id="cr-name-hint"></p>`
+        $('cr-name').addEventListener('input', (e) => { cr.name = e.target.value.trim() })
+        $('cr-rand').addEventListener('click', () => { cr.name = SQ.generatePlayerName('xiuxian'); $('cr-name').value = cr.name })
+        $('cr-next').addEventListener('click', () => {
+          if (cr.name.length < 2 || cr.name.length > 8) { $('cr-name-hint').textContent = '道名须 2~8 字'; return }
+          cr.step = 2; renderCreate()
+        })
+      } else if (cr.step === 2) {
+        if (!cr.talents) cr.talents = rollTalents(cr.worldId)
+        const combo = `${cr.talents.filter((t) => t.kind === 'positive').length} 正 ${cr.talents.filter((t) => t.kind === 'negative').length} 负`
+        const solo = cr.talents.length === 2
+        b.innerHTML = `<h1>天命所赋 <span class="chip">${combo}</span></h1>
+          <div style="margin:10px 0">${cr.talents.map((t) => `<div class="talent-card ${t.kind === 'positive' ? 'pos' : 'neg'} ${t.tier === 'rare' ? 'rare' : ''}">
+            <b>${t.name}</b> <span class="dim mini">${t.tier === 'rare' ? '· 稀有' : ''}${solo && t.kind === 'positive' ? ' · 极致单一 ×1.5' : ''}</span>
+            <div class="mini muted">${t.desc}</div></div>`).join('')}</div>
+          <div style="display:flex;gap:8px">
+            <button id="cr-reroll" class="grow">重抽天命</button>
+            <button id="cr-lock" class="btn-p">确认锁定</button>
+          </div>`
+        $('cr-reroll').addEventListener('click', () => { cr.talents = rollTalents(cr.worldId); renderCreate() })
+        $('cr-lock').addEventListener('click', () => showConfirm('天赋确认后此生不可更改，是否入定？', () => { cr.step = 3; renderCreate() }))
+      } else {
+        if (!cr.worldName) cr.worldName = SQ.generateWorldName(cr.worldId)
+        const worlds = SQ.visibleWorlds()
+        b.innerHTML = `<h1>三千世界 · 择界重生</h1>
+          <div style="margin:10px 0">${worlds.map((w) => {
+            const nm = w.status === 'live' ? cr.worldName : '？？？'
+            const st = w.status === 'live' ? '首发' : '待开启'
+            return `<div class="world-card ${w.status === 'live' ? 'on' : 'coming'}" data-w="${w.id}">
+              <b>${nm}</b> <span class="chip mini">${st}</span>
+              <div class="mini muted">${w.displayName} · ${(w.tags || []).join(' / ')}</div>
+              ${w.status !== 'live' ? '<div class="mini dim">此界尚在混沌，未可投生</div>' : ''}
+            </div>`
+          }).join('')}</div>
+          <div style="display:flex;gap:8px">
+            <button id="cr-back">返回</button>
+            <button id="cr-go" class="btn-p grow">入世 · 开始修行</button>
+          </div>`
+        $('cr-back').addEventListener('click', () => { cr.step = 2; renderCreate() })
+        $('cr-go').addEventListener('click', async () => {
+          await SQ.mutate(state, (s) => {
+            SQ.enterWorld(s, { name: cr.name, talents: cr.talents, worldId: cr.worldId, worldName: cr.worldName })
+            const ws = s.worlds[cr.worldId]
+            ws.__worldId = cr.worldId; ws.__profile = s.profile
+            H.pushLog(ws, `「${s.profile.name}」降生于 ${s.profile.worldName}，自此踏上修行路`, 'sys')
+            // 开局即上架：创角完成立刻补货一次，同时启动 4 小时补货倒计时（不再空货架等刷新）
+            if (window.SQS && SQS.shopRestock) { ws.shop.feeIdx = 0; SQS.shopRestock(s, ws) }
+          })
+          screen = 'MAIN'; renderMain()
+        })
+      }
+    }
+
+    function rollTalents(worldId) {
+      const C = window.SQT_COMMON, X = window.SQT_XIUXIAN
+      const posPool = C.positive.concat(X ? X.positive : [])
+      const negPool = C.negative.concat(X ? X.negative : [])
+      let pos, neg
+      const r = Math.random()
+      if (r < 0.4) { pos = 1; neg = 1 } else if (r < 0.75) { pos = 2; neg = 1 } else { pos = 1; neg = 2 }
+      const pickN = (pool, n) => {
+        const pool2 = pool.slice(); const out = []
+        for (let i = 0; i < n; i++) {
+          const t = H.wpick(pool2, (x) => x.weight)
+          out.push(t); pool2.splice(pool2.indexOf(t), 1)
+        }
+        return out
+      }
+      let out = pickN(posPool, pos).concat(pickN(negPool, neg))
+      if (pos === 1 && neg === 1) {
+        out = out.map((t) => {
+          if (t.kind !== 'positive') return t
+          const fx = {}; for (const k of Object.keys(t.effects)) {
+            const v = t.effects[k] * 1.5
+            fx[k] = Math.round(v * 1000) / 1000
+          }
+          return Object.assign({}, t, { effects: fx, amplified: true })
+        })
+      }
+      return out
+    }
+
+    // ---------- 主界面 ----------
+    function renderMain() {
+      $('creation').style.display = 'none'; $('main').style.display = 'flex'
+      $('topbar').style.display = 'flex'; $('tabs').style.display = 'flex'
+      const ws = bind()
+      const p = pack()
+      $('tb-name').textContent = `${state.profile.name} @ ${state.profile.worldName} · ${p.realms[ws.realm].name}`
+      const kt = p.karmaTier(ws.karma || 0)
+      const kb = $('tb-karma')
+      kb.textContent = `${kt === 'right' ? '正道' : kt === 'evil' ? '魔道' : '左道'} ${ws.karma >= 0 ? '+' : ''}${ws.karma}`
+      kb.className = 'chip ' + (kt === 'right' ? 'kr-r' : kt === 'evil' ? 'kr-e' : 'kr-n')
+      $('tb-lingyun').textContent = `灵蕴 ${H.fmt(ws.lingyun || 0)}`
+      $('tb-stones').textContent = `灵石 ${H.fmt(ws.stones)}`
+      // 各分区独立容错：单个渲染函数抛错不再连坐其余 Tab（错误显示在日志 Tab）
+      for (const [name, fn] of [
+        ['culti', () => renderCulti(ws)], ['zone', () => renderZones(ws)], ['arts', () => renderArts(ws)],
+        ['gear', () => renderGear(ws)], ['treasure', () => renderTreasures(ws)], ['shop', () => renderShop(ws)], ['log', () => renderLog(ws)],
+      ]) {
+        try { fn() } catch (e) {
+          console.error('render ' + name + ' failed:', e)
+          if (name === 'log') $('log-list').innerHTML = `<li><span class="stale">渲染出错：${e.message}</span></li>`
+        }
+      }
+      renderOverview(ws)
+    }
+
+    function renderOverview(ws) {
+      $('ro-atk').textContent = String(Math.round(SQS.power(state, ws)))
+      const at = ws.attrs || {}
+      $('ro-jing').textContent = String(at.jing || 0)
+      $('ro-qi').textContent = String(at.qi || 0)
+      $('ro-shen').textContent = String(at.shen || 0)
+      $('ro-attrs-note').textContent = '精主战力（+0.1%/点）· 气主上限（+0.5%/点）· 神主心志与劫伤'
+      const pool = window.SQT_COMMON.positive.concat(window.SQT_COMMON.negative, window.SQT_XIUXIAN.positive, window.SQT_XIUXIAN.negative)
+      const byId = {}
+      for (const t of pool) byId[t.id] = t
+      $('ro-talents').innerHTML = (state.profile.talents || []).map((t) => {
+        const def = byId[t.id]
+        const name = def ? def.name : t.id
+        const desc = def ? def.desc : Object.keys(t.effects || {}).map((k) => (FX_NAMES[k] || k) + ' ' + Math.round((t.effects[k] || 0) * 100) + '%').join('，')
+        return `<div class="talent-card ${t.kind === 'positive' ? 'pos' : 'neg'} ${t.tier === 'rare' ? 'rare' : ''}">
+          <b>${name}</b> <span class="mini dim">${t.kind === 'positive' ? '正面' : '负面'}${t.tier === 'rare' ? ' · 稀有' : ''}${t.src === 'gift' ? ' · 天道垂青' : ''}</span>
+          <div class="mini muted">${def ? def.desc : desc}</div></div>`
+      }).join('') || '<div class="mini dim">无</div>'
+    }
+
+    function renderCulti(ws) {
+      const p = pack()
+      const cap = SQS.qiCap(state, ws)
+      const rate = SQS.qiRate(state, ws)
+      $('cu-qi').textContent = H.fmt(ws.qi)
+      $('cu-bar').style.width = H.clamp(ws.qi / cap * 100, 0, 100) + '%'
+      $('cu-cap').textContent = `上限 ${H.fmt(cap)}`
+      $('cu-rate').textContent = H.fmt(rate) + '/秒'
+      const next = p.realms[ws.realm + 1]
+      const btn = $('btn-break')
+      if (next) {
+        const need = next.need * (1 + (ws.nextNeedMod || 0)) * SQS.mult(state, ws, 'realmCost')
+        $('cu-next').textContent = next.name
+        $('cu-need').textContent = `还需 ${H.fmt(Math.max(0, need - ws.qi))} 修为`
+        const tp = p.tribulationP(state, ws)
+        $('cu-p').textContent = Math.round(tp.p * 100) + '%'
+        $('cu-trib-detail').textContent = `base ${Math.round(tp.parts.base * 100)}% + 抗性 ${Math.round(tp.parts.resistPart * 100)}% + 战力 ${Math.round(tp.parts.powerPart * 100)}% + 天赋 ${Math.round(tp.parts.talent * 100)}% + 业力 ${Math.round(tp.parts.km * 100)}%${tp.parts.tre ? ' + 法宝 ' + Math.round(tp.parts.tre * 100) + '%' : ''}${tp.parts.next ? ' + 器物 ' + Math.round(tp.parts.next * 100) + '%' : ''}（封顶 95%）`
+        btn.disabled = ws.qi < need
+        btn.textContent = ws.qi >= need ? `渡劫突破 → ${next.name}` : `渡劫突破（修为未满）`
+      } else {
+        $('cu-next').textContent = '已臻化境'; $('cu-need').textContent = '真仙之上，再无境界'
+        $('cu-p').textContent = '—'; $('cu-trib-detail').textContent = ''
+        btn.disabled = true; btn.textContent = '已臻化境'
+      }
+      const at = ws.attrs || {}
+      $('cu-detail').innerHTML = `境界基础 ×1 ｜ 天赋 Σ${Math.round(SQS.zoneSum(state, ws, 'qiRate') * 100)}% ｜ 阵营 ×${p.alignmentQiMult(ws)}${(ws.buffs || []).filter((b) => b.field === 'qiRate' && b.until > Date.now()).length ? ' ｜ 限时 buff 生效中' : ''}　·　精 ${at.jing || 0} 气 ${at.qi || 0} 神 ${at.shen || 0}`
+      // 双状态
+      const cult = ws.mode === 'cultivate'
+      $('mode-culti').className = 'mini' + (cult ? ' btn-p' : '')
+      $('mode-combat').className = 'mini' + (cult ? '' : ' btn-p')
+      const epiNow = SQS.hasEpiphany(ws)
+      $('mode-hint').textContent = cult
+        ? `打坐修炼：修为与灵蕴产出 ×2${epiNow ? '，【顿悟】进行中（再 ×2）' : '，偶发【顿悟】再翻倍'}；不出战斗。`
+        : '秘境历练：持续击杀获得法器与灵石，奇遇频生；修为/灵蕴以常规速率积累。'
+      $('cu-ly').textContent = H.fmt(ws.lingyun || 0)
+      $('cu-ly-rate').textContent = `+${H.fmt(SQS.lingyunRate(state, ws))}/秒`
+      // 历练态：状态面板内嵌当前秘境 mini 进度
+      const zm = $('cz-mini')
+      if (ws.mode === 'combat') {
+        const zone = p.zones[ws.zone]
+        const prog = ws.prog[ws.zone] || 0
+        const bottleneck = SQS.power(state, ws) < zone.need
+        zm.style.display = 'block'
+        $('cz-name').textContent = '历练 · ' + zone.name + (bottleneck ? '（修为不足，进度封顶）' : '')
+        $('cz-prog').textContent = prog + '/100'
+        $('cz-bar').style.width = H.clamp(prog, 0, 100) + '%'
+      } else {
+        zm.style.display = 'none'
+      }
+    }
+
+    function renderZones(ws) {
+      const p = pack()
+      $('zone-list').innerHTML = p.zones.map((z, i) => {
+        const unlocked = ws.realm >= z.unlockRealm
+        const on = ws.zone === i
+        const bottleneck = SQS.power(state, ws) < z.need
+        const prog = ws.prog[i] || 0
+        const cleared = ws.zoneClear[i]
+        if (!unlocked) return `<div class="zcard dim"><div class="zc-head"><b>？？？</b><span class="grow"></span><span class="mini dim">需 ${realmName(z.unlockRealm)}</span></div><div class="mini dim">此秘境尚未开启</div></div>`
+        return `<div class="zcard ${on ? 'on' : ''}" data-zone="${i}" style="cursor:${on ? 'default' : 'pointer'}">
+          <div class="zc-head"><b>${z.name}</b>${on ? ' <span class="chip mini">进行中</span>' : ''}${cleared ? ' <span class="mini dim">已通关</span>' : ''}<span class="grow"></span><span class="mini dim">需战力 ${H.fmt(z.need)}</span></div>
+          <div class="mini dim">${z.spk} 灵石/杀${bottleneck ? ' <span class="stale">· 修为不足，举步维艰</span>' : ''}</div>
+          ${on ? `<div class="bar" style="margin-top:6px"><i style="width:${prog}%"></i></div><div class="mini dim" style="margin-top:3px">历练进度 ${prog}/100</div>` : ''}
+        </div>`
+      }).join('')
+      $('zone-list').querySelectorAll('[data-zone]').forEach((el) => {
+        el.addEventListener('click', () => {
+          const i = +el.dataset.zone
+          if (i === state.worlds[state.profile.worldId].zone) return
+          SQ.mutate(state, (s) => {
+            const w = s.worlds[s.profile.worldId]
+            if (w.realm >= pack().zones[i].unlockRealm) { w.zone = i; H.pushLog(w, `前往「${pack().zones[i].name}」历练`, 'sys') }
+          }).then(renderMain)
+        })
+      })
+    }
+
+    let swapMode = null
+    const FX_NAMES = {
+      qiRate: '修为产出', qiCap: '修为上限', offlineEff: '离线收益', combatPower: '战力',
+      combatSpeed: '战斗速度', dropRate: '掉落率', stonesRate: '灵石获取', shopCost: '商店价格',
+      eventRate: '奇遇频率', eventLuck: '奇遇偏向', realmCost: '突破需求', tribBonus: '渡劫成功率',
+      tribFailLossMod: '渡劫损失', artsSpeed: '修炼速度', gearLuck: '装备品阶',
+    }
+    function fxText(art, lv) {
+      const parts = Object.entries(art.fx || {}).map(([k, v]) => {
+        const total = Math.round(v * (lv || 0) * 100)
+        return `${FX_NAMES[k] || k} +${Math.round(v * 100)}%/级${lv ? `（现 +${total}%）` : ''}`
+      })
+      return parts.join('，') || '—'
+    }
+    function renderArts(ws) {
+      const p = pack()
+      $('art-slots').innerHTML = ws.slots.map((id, i) => {
+        if (!id) return `<div class="slot dim">虚位以待</div>`
+        const art = p.arts[id]
+        const cost = SQS.artUpgradeCost(state, ws, id)
+        const lv = ws.artsLevels[id] || 0
+        return `<div class="slot"><div><b class="a${art.alignment}">${art.name}</b> <span class="mini dim">Lv.${lv}${lv >= 5 ? '（圆满）' : ''}</span></div>
+          <div class="mini dim">滋养·${({ j: '精', q: '气', s: '神' })[art.attr]}</div>
+          <div class="mini dim">${fxText(art, lv)}</div>
+          <div style="margin-top:6px;display:flex;gap:6px">
+            <button class="mini" data-up="${id}" ${cost == null || (ws.lingyun || 0) < cost ? 'disabled' : ''}>升级${cost != null ? ' ' + H.fmt(cost) + ' 灵蕴' : ''}</button>
+            <button class="mini" data-out="${i}">移出</button>
+          </div></div>`
+      }).join('')
+      $('arts-owned').innerHTML = ws.artsKnown.length ? '<div class="slots">' + ws.artsKnown.map((id) => {
+        const art = p.arts[id]
+        const slotted = ws.slots.includes(id)
+        const sig = artSig(art)
+        return `<div class="slot"><div class="zc-head"><b class="a${art.alignment}">《${art.name}》</b>
+          <span class="mini dim">${({ r: '正道', e: '魔道', n: '左道' })[art.alignment]} · 滋养${({ j: '精', q: '气', s: '神' })[art.attr]}${sig ? ' · ' + sig : ''}</span></div>
+          <div class="mini dim">Lv.${ws.artsLevels[id] || 0} · ${fxText(art, ws.artsLevels[id] || 0)}</div>
+          <div style="margin-top:6px">${slotted ? '<span class="mini dim">槽内生效中</span>' : `<button class="mini" data-in="${id}" ${ws.slots.includes(null) ? '' : 'disabled'}>装入空槽</button>`}</div></div>`
+      }).join('') + '</div>' : '<div class="mini dim">尚未习得功法，历练掉落或坊市可得。</div>'
+      $('shelf-panel').style.display = ws.shelf.length ? 'block' : 'none'
+      $('arts-shelf').innerHTML = ws.shelf.map((id) => {
+        const art = p.arts[id]
+        const r = art.reqs || {}
+        const missing = []
+        if (r.realm != null && ws.realm < r.realm) missing.push(`需 ${realmName(r.realm)}`)
+        if (r.karmaMax != null) missing.push(`需业障 ≤ ${r.karmaMax}`)
+        if (r.attr) missing.push(`需 ${({ j: '精', q: '气', s: '神' })[r.attr.id]} ≥ ${r.attr.min}（现 ${(ws.attrs || {})[r.attr.id] || 0}）`)
+        return `<div class="row"><div class="grow"><b class="a${art.alignment}">${art.name}</b> <span class="mini dim">${({ r: '正道', e: '魔道', n: '左道' })[art.alignment]}</span>
+          <div class="mini stale">${missing.join(' · ')}</div></div></div>`
+      }).join('')
+      $('art-slots').querySelectorAll('[data-up]').forEach((b) => b.addEventListener('click', () => SQ.mutate(state, (s) => SQS.artUpgrade(s, s.worlds[s.profile.worldId], b.dataset.up)).then(renderMain)))
+      $('art-slots').querySelectorAll('[data-out]').forEach((b) => b.addEventListener('click', () => SQ.mutate(state, (s) => { s.worlds[s.profile.worldId].slots[+b.dataset.out] = null; SQS.recalcDerived(s, s.worlds[s.profile.worldId]) }).then(renderMain)))
+      $('arts-owned').querySelectorAll('[data-in]').forEach((b) => b.addEventListener('click', () => SQ.mutate(state, (s) => {
+        const w = s.worlds[s.profile.worldId]
+        const empty = w.slots.findIndex((x) => !x)
+        if (empty >= 0) { w.slots[empty] = b.dataset.in; SQS.recalcDerived(s, w) }
+      }).then(renderMain)))
+    }
+    function artSig(art) {
+      if (!art.special) return ''
+      const [pid, tier] = art.special.split(':')
+      const pool = pack().specialPool[pid]
+      return pool ? pool.name : ''
+    }
+
+    // ---------- 法宝（灵宝）页面 ----------
+    function tBadge(def) {
+      return def.kind === 'xian' ? '<span class="chip mini t4">先天</span>' : '<span class="chip mini t2">后天</span>'
+    }
+    function tGrowthText(ws, o) {
+      const TD = window.SQX_TREASURES, tr = ws.treasures || {}
+      if (o.kind === 'hou' || o.lv != null) return `祭炼 ${(o.lv || 1)}/5 级`
+      const wins = tr.tribWins || 0
+      return `认主 ${(o.stage || 1)}/3 阶${wins >= TD.BOND_COST ? '（可进阶）' : `（渡劫胜场 ${wins}/${TD.BOND_COST}）`}`
+    }
+    function renderTreasures(ws) {
+      const T = window.SQXT, TD = window.SQX_TREASURES
+      if (!T || !TD) { $('tslots').innerHTML = '<div class="mini dim">法宝数据未加载。</div>'; return }
+      const tr = ws.treasures || {}
+      const CN = ['一', '二', '三']
+      // 栏位
+      $('tslots').innerHTML = [0, 1, 2].map((i) => {
+        if (ws.realm < TD.SLOT_UNLOCK[i]) return `<div class="slot dim"><b>第${CN[i]}栏</b><div class="mini dim">${realmName(TD.SLOT_UNLOCK[i])}解锁</div></div>`
+        const id = (tr.slots || [])[i]
+        if (!id) return `<div class="slot dim"><b>第${CN[i]}栏</b><div class="mini dim">虚位以待</div></div>`
+        const def = T.byId[id]
+        const entry = (tr.owned || []).find((o) => o.id === id)
+        return `<div class="slot"><div class="zc-head"><b class="t4">${def.name}</b>${tBadge(def)} <span class="mini dim">${def.grade}</span></div>
+          <div class="mini dim">${T.fxText(ws, entry)}</div>
+          <div style="margin-top:6px"><button class="mini" data-tsout="${i}">卸下</button></div></div>`
+      }).join('')
+      // 法宝库（未装备的持有件）
+      const equippedIds = tr.slots || []
+      const owned = (tr.owned || []).filter((o) => !equippedIds.includes(o.id))
+      $('towned').innerHTML = owned.length ? '<div class="slots">' + owned.map((o) => {
+        const def = T.byId[o.id]
+        const ok = T.meetsReq(ws, def)
+        const rc = def.kind === 'hou' ? TD.refineCost(state, ws, o) : null
+        return `<div class="slot ${ok ? '' : 'dim'}"><div class="zc-head"><b class="t4">${def.name}</b>${tBadge(def)} <span class="mini dim">${def.grade}</span></div>
+          <div class="mini muted">${def.desc}</div>
+          <div class="mini dim">${T.fxText(ws, o)}</div>
+          ${ok ? '' : `<div class="mini stale">${T.reqText(ws, def)}</div>`}
+          <div class="mini dim">${tGrowthText(ws, o)}</div>
+          <div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap">
+            ${ok && (tr.slots || []).some((x, j) => !x && ws.realm >= TD.SLOT_UNLOCK[j]) ? `<button class="mini" data-tsin="${o.id}">装入</button>` : ''}
+            ${def.kind === 'hou' ? `<button class="mini" data-tsrefine="${o.id}" ${rc != null && ws.stones >= rc ? '' : 'disabled'}>祭炼${rc != null ? ' ' + H.fmt(rc) + ' 灵石' : '（已满级）'}</button>` : `<button class="mini" data-tsbond="${o.id}" ${(tr.tribWins || 0) >= TD.BOND_COST && (o.stage || 1) < 3 ? '' : 'disabled'}>认主进阶</button>`}
+          </div></div>`
+      }).join('') + '</div>' : '<div class="mini dim">法宝库尚空——先天法宝藏于秘境首通，后天法宝坊市有售。</div>'
+      // 图鉴
+      $('tcodex').innerHTML = '<div class="slots">' + TD.list.map((def) => {
+        const own = (tr.owned || []).some((o) => o.id === def.id)
+        return `<div class="slot ${own ? '' : 'dim'}"><div class="zc-head"><b class="${own ? 't4' : ''}">${def.name}</b>${tBadge(def)} <span class="mini dim">${def.grade}</span>${own ? ' <span class="mini t1">已持</span>' : ''}</div>
+          <div class="mini muted">${def.desc}</div>
+          <div class="mini dim">${T.reqText(ws, def)}</div>
+          <div class="mini dim">出处：${def.obtain}</div></div>`
+      }).join('') + '</div>'
+      // 乾坤鼎
+      $('tding').style.display = T.has(ws, 'x11') ? 'block' : 'none'
+      // 事件绑定
+      $('tslots').querySelectorAll('[data-tsout]').forEach((b) => b.addEventListener('click', () => treasureUnequip(+b.dataset.tsout)))
+      $('towned').querySelectorAll('[data-tsin]').forEach((b) => b.addEventListener('click', () => treasureEquip(b.dataset.tsin)))
+      $('towned').querySelectorAll('[data-tsrefine]').forEach((b) => b.addEventListener('click', () => treasureRefine(b.dataset.tsrefine)))
+      $('towned').querySelectorAll('[data-tsbond]').forEach((b) => b.addEventListener('click', () => treasureBond(b.dataset.tsbond)))
+    }
+    async function treasureEquip(id) {
+      await SQ.mutate(state, (s) => {
+        const w = s.worlds[s.profile.worldId]
+        const st = w.treasures
+        const i = st.slots.findIndex((x, j) => !x && w.realm >= window.SQX_TREASURES.SLOT_UNLOCK[j])
+        if (i >= 0) { st.slots[i] = id; H.pushLog(w, `祭出法宝「${window.SQXT.byId[id].name}」`, 'treasure') }
+      }).then(renderMain)
+    }
+    async function treasureUnequip(i) {
+      await SQ.mutate(state, (s) => {
+        const w = s.worlds[s.profile.worldId]
+        const id = w.treasures.slots[i]
+        if (id) { w.treasures.slots[i] = null; H.pushLog(w, `收起法宝「${window.SQXT.byId[id].name}」`, 'treasure') }
+      }).then(renderMain)
+    }
+    async function treasureRefine(id) {
+      await SQ.mutate(state, (s) => {
+        const w = s.worlds[s.profile.worldId]
+        const st = w.treasures
+        const entry = st.owned.find((o) => o.id === id)
+        const cost = window.SQX_TREASURES.refineCost(s, w, entry)
+        if (!entry || cost == null || (w.stones || 0) < cost) return
+        w.stones -= cost
+        if (Math.random() < 0.30) {
+          entry.lv = Math.max(1, (entry.lv || 1) - 1)
+          H.pushLog(w, `「${window.SQXT.byId[id].name}」祭炼失败，灵性反噬降为 ${entry.lv} 级`, 'treasure')
+        } else {
+          entry.lv = (entry.lv || 1) + 1
+          H.pushLog(w, `「${window.SQXT.byId[id].name}」祭炼有成，升至 ${entry.lv} 级`, 'treasure')
+        }
+      }).then(renderMain)
+    }
+    async function treasureBond(id) {
+      await SQ.mutate(state, (s) => {
+        const w = s.worlds[s.profile.worldId]
+        const st = w.treasures
+        const entry = st.owned.find((o) => o.id === id)
+        if (!entry || (entry.stage || 1) >= 3 || (st.tribWins || 0) < window.SQX_TREASURES.BOND_COST) return
+        st.tribWins -= window.SQX_TREASURES.BOND_COST
+        entry.stage = (entry.stage || 1) + 1
+        H.pushLog(w, `「${window.SQXT.byId[id].name}」认主加深，进为 ${entry.stage} 阶`, 'treasure')
+      }).then(renderMain)
+    }
+    $('t-conv-qi').addEventListener('click', async () => {
+      await SQ.mutate(state, (s) => {
+        const w = s.worlds[s.profile.worldId]
+        const take = Math.round(w.qi * 0.25)
+        if (take <= 0) return
+        w.qi -= take; w.stones += take
+        H.pushLog(w, `【乾坤鼎】灵气 ${H.fmt(take)} 无损化为灵石`, 'treasure')
+      }).then(renderMain)
+    })
+    $('t-conv-dan').addEventListener('click', async () => {
+      await SQ.mutate(state, (s) => {
+        const w = s.worlds[s.profile.worldId]
+        if ((w.stones || 0) < 100) return
+        w.stones -= 100
+        w.buffs.push({ field: 'qiRate', mult: 0.50, until: Date.now() + 3600e3 })
+        H.pushLog(w, '【乾坤鼎】百灵炼丹：聚灵丹入腹，灵气产出 +50%（1 小时）', 'treasure')
+      }).then(renderMain)
+    })
+
+    function renderGear(ws) {
+      const p = pack()
+      $('gear-slots').innerHTML = Object.keys(ws.gear).map((slot) => {
+        const it = ws.gear[slot]
+        const sn = (p.gearSlots.find((x) => x.id === slot) || {}).name || slot
+        if (!it) return `<div class="slot"><b class="dim">${sn}</b><div class="mini dim">空空如也</div></div>`
+        return `<div class="slot"><div><b class="t${it.tier}">${it.name}</b> <span class="mini dim">${p.gearTiers[it.tier].name}</span>
+          <span class="mini ${it.alignment === 'r' ? 'ar' : it.alignment === 'e' ? 'ae' : 'an'}">${it.alignment === 'r' ? '☯正' : it.alignment === 'e' ? '☠魔' : '·左'}</span></div>
+          <div class="mini dim">攻 ${it.atk}${it.qiBonus ? ` · 灵 +${Math.round(it.qiBonus * 100)}%` : ''}${it.resist ? ` · 抗 ${it.resist}` : ''}${it.attrValue ? ` · ${({ jing: '精', qi: '气', shen: '神' })[it.attrValue.attr]} +${it.attrValue.value}` : ''}</div>
+          ${it.reqs.realm > 0 ? `<div class="mini dim">佩境：${realmName(it.reqs.realm)}</div>` : ''}
+          ${it.special ? `<div class="mini t4">◆ ${p.gearSpecials[it.special].name}</div>` : ''}
+          <div class="mini dim">评分 ${Math.round(SQS.score(it))}</div></div>`
+      }).join('')
+      $('stash-panel').style.display = ws.stash.length ? 'block' : 'none'
+      $('gear-stash').innerHTML = '<div class="slots">' + ws.stash.map((it) => `<div class="slot"><div class="zc-head"><b class="t${it.tier}">${it.name}</b> <span class="mini dim">${p.gearTiers[it.tier].name}</span>${it.special ? ` <span class="mini t4">◆ ${p.gearSpecials[it.special].name}</span>` : ''}</div>
+        <div class="mini stale">需境界：${realmName(it.reqs.realm)}（现 ${realmName(ws.realm)}）</div></div>`).join('') + '</div>'
+    }
+
+    function renderShop(ws) {
+      const p = pack()
+      const nextIn = Math.max(0, (ws.shop.nextRestock || 0) - Date.now())
+      const fee = SQS.refreshFee(state, ws)
+      $('shop-hint').textContent = `${H.fmtDur(nextIn)}后补货 · 刷新费 ${H.fmt(fee)}${ws.shop.blackMarket ? ' · 黑市开启' : ''}`
+      $('btn-refresh').disabled = ws.stones < fee
+      $('shop-list').innerHTML = (ws.shop.goods || []).map((g, i) => {
+        if (g.kind === 'gear') {
+          const it = g.item
+          const price = Math.round(SQS.gearPrice(state, ws, it) * (g.black ? 1.3 : 1))
+          return `<div class="goods"><b class="t${it.tier}">${it.name}</b> <span class="mini dim">${p.gearTiers[it.tier].name}${g.black ? ' · 黑市' : ''}</span>
+            <div class="mini dim">攻 ${it.atk}${it.qiBonus ? ` · 灵 +${Math.round(it.qiBonus * 100)}%` : ''}${it.resist ? ` · 抗 ${it.resist}` : ''}${it.attrValue ? ` · 亲 +${it.attrValue.value}` : ''}${it.reqs.realm ? ` · 需 ${realmName(it.reqs.realm)}` : ''}</div>
+            <div class="row" style="border-top:none;padding-top:6px"><span class="price mini muted">${H.fmt(price)} 灵石</span><button class="mini btn-p" data-buy="${i}" ${ws.stones < price ? 'disabled' : ''}>购入</button></div></div>`
+        }
+        if (g.kind === 'pill') {
+          const price = SQS.pillPrice(state, ws, g.pill)
+          return `<div class="goods"><b>${g.pill.name}</b><div class="mini dim">${g.pill.desc}</div>
+            <div class="row" style="border-top:none;padding-top:6px"><span class="mini muted">${H.fmt(price)} 灵石</span><button class="mini btn-p" data-buy="${i}" ${ws.stones < price ? 'disabled' : ''}>购入</button></div></div>`
+        }
+        if (g.kind === 'art') {
+          const art = p.arts[g.artId]
+          const price = SQS.artShopPrice(state, ws, art, art.alignment === 'e')
+          return `<div class="goods"><b class="a${art.alignment}">《${art.name}》</b> <span class="mini dim">${({ r: '正道', e: '魔道', n: '左道' })[art.alignment]}功法${g.black ? ' · 黑市' : ''}</span>
+            <div class="mini dim">每级 ${Object.keys(art.fx).map((k) => k + ' +' + Math.round(art.fx[k] * 100) + '%').join('，')}</div>
+            <div class="row" style="border-top:none;padding-top:6px"><span class="mini muted">${H.fmt(price)} 灵石</span><button class="mini btn-p" data-buy="${i}" ${ws.stones < price ? 'disabled' : ''}>购入</button></div></div>`
+        }
+        if (g.kind === 'treasure') {
+          const def = window.SQXT.byId[g.tid]
+          const price = Math.round(SQS.treasurePrice(state, ws, def) * (g.black ? 1.3 : 1))
+          return `<div class="goods"><b class="t4">${def.name}</b> <span class="mini dim">${def.grade}${g.black ? ' · 黑市' : ''}</span>
+            <div class="mini muted">${def.desc}</div>
+            <div class="mini dim">${window.SQXT.reqText(ws, def)}</div>
+            <div class="row" style="border-top:none;padding-top:6px"><span class="mini muted">${H.fmt(price)} 灵石</span><button class="mini btn-p" data-buy="${i}" ${ws.stones < price ? 'disabled' : ''}>购入</button></div></div>`
+        }
+        const price = Math.round(150 * (1 + ws.realm * 0.4) * Math.max(0.5, SQS.mult(state, ws, 'shopCost')))
+        return `<div class="goods"><b>灵石折扣包</b><div class="mini dim">以三成灵气上限换灵石</div>
+          <div class="row" style="border-top:none;padding-top:6px"><span class="mini muted">${H.fmt(price)} 灵石</span><button class="mini btn-p" data-buy="${i}" ${ws.stones < price ? 'disabled' : ''}>购入</button></div></div>`
+      }).join('') || '<div class="dim mini">货架已空，等待补货。</div>'
+      $('shop-list').querySelectorAll('[data-buy]').forEach((b) => b.addEventListener('click', () => {
+        SQ.mutate(state, (s) => { const w = s.worlds[s.profile.worldId]; SQS.buyGoods(s, w, +b.dataset.buy, []) }).then(renderMain)
+      }))
+    }
+
+    function renderLog(ws) {
+      const chips = [['all', '全部'], ['event', '奇遇'], ['trib', '渡劫'], ['gear', '法器'], ['treasure', '法宝'], ['skill', '功法'], ['shop', '坊市'], ['sys', '系统']]
+      $('log-chips').innerHTML = chips.map(([k, n]) => `<button class="mini ${logFilter === k ? 'btn-p' : ''}" data-f="${k}">${n}</button>`).join('')
+      $('log-chips').querySelectorAll('[data-f]').forEach((b) => b.addEventListener('click', () => { logFilter = b.dataset.f; renderLog(ws) }))
+      const list = (ws.log || []).filter((l) => logFilter === 'all' || l.tag === logFilter)
+      $('log-list').innerHTML = list.map((l) => `<li><span class="t">${H.fmtClock(l.t)}</span><span>${l.msg}</span></li>`).join('') || '<li><span>尚无事端。</span></li>'
+      $('save-hint').textContent = `上次保存：${H.fmtClock(ws.lastSave || Date.now())}`
+    }
+
+    // ---------- 按钮 ----------
+    $('btn-refresh').addEventListener('click', async () => {
+      let rr = null
+      await SQ.mutate(state, (s) => { rr = SQS.shopRefresh(s, s.worlds[s.profile.worldId]) })
+      renderMain()
+      if (rr && rr.poor) toast(`灵石不足：本次刷新需 ${H.fmt(rr.fee)} 灵石`)
+    })
+    $('btn-break').addEventListener('click', () => {
+      const wsb = bind()
+      const p = pack()
+      const next = p.realms[wsb.realm + 1]
+      if (!next) return
+      const need = next.need * (1 + (wsb.nextNeedMod || 0)) * SQS.mult(state, wsb, 'realmCost')
+      if (wsb.qi < need) return
+      const tp = p.tribulationP(state, wsb)
+      $('modal-box').innerHTML = `<h3 style="margin:0 0 8px">渡劫突破 → ${next.name}</h3>
+        <p class="muted">成功率 <b>${Math.round(tp.p * 100)}%</b>（base ${Math.round(tp.parts.base * 100)}% + 抗性 ${Math.round(tp.parts.resistPart * 100)}% + 战力 ${Math.round(tp.parts.powerPart * 100)}% + 天赋 ${Math.round(tp.parts.talent * 100)}% + 业力 ${Math.round(tp.parts.km * 100)}%${tp.parts.tre ? ' + 法宝 ' + Math.round(tp.parts.tre * 100) + '%' : ''}，封顶 95%）</p>
+        <p class="mini dim">成功：晋升境界，修为清零，功法保留，天道垂青赐下三选一天赋。<br>失败：修为受损（约 -${Math.round((1 - SQX_KARMA.tribFailFactor(state, wsb)) * 100)}%），境界不变。</p>
+        <div style="display:flex;gap:8px;margin-top:12px"><button id="m-cancel" class="grow">再等等</button><button id="m-ok" class="btn-p">引动天劫</button></div>`
+      $('modal').classList.add('on')
+      $('m-cancel').addEventListener('click', () => $('modal').classList.remove('on'))
+      $('m-ok').addEventListener('click', () => {
+        $('modal').classList.remove('on')
+        let rollRes = null
+        SQ.mutate(state, (s) => {
+          const w = s.worlds[s.profile.worldId]
+          w.__worldId = s.profile.worldId
+          rollRes = p.rollTribulation(s, w, [])
+        }).then(() => {
+          renderMain()
+          if (rollRes) showTrib(rollRes)
+          if (rollRes && rollRes.success) showDaoGift()
+        })
+      })
+    })
+
+    function showDaoGift() {
+      const pool = window.SQT_COMMON.positive.concat(window.SQT_XIUXIAN.positive)
+        .filter((t) => !(state.profile.talents || []).some((x) => x.id === t.id))
+      if (!pool.length) return
+      const picks = []
+      const poolCopy = pool.slice()
+      for (let i = 0; i < 3 && poolCopy.length; i++) {
+        const t = H.wpick(poolCopy, (x) => x.weight)
+        picks.push(t); poolCopy.splice(poolCopy.indexOf(t), 1)
+      }
+      $('modal-box').innerHTML = `<h3 style="margin:0 0 6px;color:var(--t4)">天道垂青</h3>
+        <p class="muted mini">渡劫功成，天道有感。三份天赋任择其一，永久生效。</p>
+        <div style="margin:10px 0">${picks.map((t, i) => `<div class="talent-card pos ${t.tier === 'rare' ? 'rare' : ''}" style="cursor:pointer" data-g="${i}">
+          <b>${t.name}</b> <span class="mini dim">${t.tier === 'rare' ? '稀有' : '普通'}</span>
+          <div class="mini muted">${t.desc}</div></div>`).join('')}</div>`
+      $('modal').classList.add('on')
+      $('modal-box').querySelectorAll('[data-g]').forEach((el) => el.addEventListener('click', () => {
+        const t = picks[+el.dataset.g]
+        SQ.mutate(state, (s) => {
+          s.profile.talents.push({ id: t.id, name: t.name, kind: t.kind, tier: t.tier, world: t.world, weight: t.weight, effects: JSON.parse(JSON.stringify(t.effects)), src: 'gift' })
+          SQS.recalcDerived(s, s.worlds[s.profile.worldId])
+          H.pushLog(s.worlds[s.profile.worldId], `天道垂青：得天赋「${t.name}」`, 'trib')
+        }).then(() => { renderMain() })
+        $('modal').classList.remove('on')
+      }))
+    }
+
+    $('mode-culti').addEventListener('click', () => setMode('cultivate'))
+    $('mode-combat').addEventListener('click', () => setMode('combat'))
+    function setMode(m) {
+      SQ.mutate(state, (s) => {
+        const w = s.worlds[s.profile.worldId]
+        if (w.mode !== m) {
+          w.mode = m
+          H.pushLog(w, m === 'cultivate' ? '入定打坐，专心修炼（灵气/灵蕴 ×2）' : '出关历练，前往秘境斩妖寻宝', 'sys')
+        }
+      }).then(renderMain)
+    }
+    $('btn-help').addEventListener('click', showHelp)
+    function showHelp() {
+      $('modal-box').innerHTML = `<h3 style="margin:0 0 8px">基本玩法</h3>
+        <div class="mini" style="line-height:1.9">
+        <b>两种状态</b>：「打坐修炼」灵气与灵蕴增长 ×2，偶发【顿悟】再翻倍；「秘境历练」持续击杀，获得法器、灵石与奇遇。修行页顶部可随时切换，两者都累积离线收益。<br><br>
+        <b>修为与渡劫</b>：修为攒满后由你亲自确认「渡劫突破」——成功晋境界、功法保留、<b>天道垂青三选一天赋</b>；失败修为受损。法器抗性、业力与天赋影响成败。<br><br>
+        <b>灵蕴</b>：随时间自动积累（打坐更快，顿悟再翻倍），是<b>功法升级</b>的唯一消耗；部分奇遇与天道垂青之外的天机会大量赠予。<br><br>
+        <b>业力（善恶）</b>：功法与法器分正道/魔道/左道。选择类奇遇影响业力——正道修炼慢但渡劫稳，魔道快但劫凶；业力 ≤ -200 开启黑市。<br><br>
+        <b>法器（四槽装备）</b>：历练掉落自动择优装备（更强者替换、其余炼化灵石）；境界不足的宝物存入库藏阁，突破后自动复检佩戴。<br><br>
+        <b>法宝（灵宝）</b>：与法器独立的称号灵宝，共 30 件（先天 12 + 后天 18），每件一条唯一签名效果。三格法宝栏（练气/金丹/化神解锁）；先天法宝全局唯一、渡劫胜场认主进阶，后天法宝可祭炼（30% 失败降级）。秘境首通赠先天法宝，坊市与黑市售后天法宝，渡劫至真仙得「鸿蒙紫气」。<br><br>
+        <b>坊市</b>：每 4 小时补货，手动刷新费用逐次递增；功法以灵石购买、以灵蕴升级（功法 Lv1~5）。<br><br>
+        <b>属性判定</b>：精/气/神随境界与养成成长，影响奇遇选择分支的成功率与瓶颈表现。
+        </div>
+        <div style="margin-top:10px;text-align:right"><button class="btn-p" id="m-ok">明白了</button></div>`
+      $('modal').classList.add('on')
+      $('m-ok').addEventListener('click', () => $('modal').classList.remove('on'))
+    }
+
+    let resetArmed = false
+    let resetTimer = null
+    $('btn-reset').addEventListener('click', async () => {
+      if (!resetArmed) {
+        resetArmed = true
+        $('btn-reset').textContent = '确认清空一切？再点一次'
+        resetTimer = setTimeout(() => { resetArmed = false; $('btn-reset').textContent = '重置存档' }, 3000)
+        return
+      }
+      clearTimeout(resetTimer)
+      resetArmed = false
+      $('btn-reset').textContent = '重置存档'
+      await SQ.mutate(state, (s) => {
+        s.profile = { name: '', talents: [], worldId: '', worldName: '', createdAt: 0 }
+        s.worlds = {}
+        s.meta = { unlockedWorlds: ['xiuxian'] }
+      })
+      screen = 'CREATE'; cr = { step: 1, name: '', talents: null, worldId: 'xiuxian', worldName: '' }
+      renderCreate()
+    })
+
+    // ---------- 模态 ----------
+    function showConfirm(text, onOk) {
+      $('modal-box').innerHTML = `<p>${text}</p><div style="display:flex;gap:8px;margin-top:12px"><button id="m-cancel" class="grow">再想想</button><button id="m-ok" class="btn-p">确认</button></div>`
+      $('modal').classList.add('on')
+      $('m-cancel').addEventListener('click', () => $('modal').classList.remove('on'))
+      $('m-ok').addEventListener('click', () => { $('modal').classList.remove('on'); onOk() })
+    }
+    function showChoice(ev) {
+      $('modal-box').innerHTML = `<h3 style="margin:0 0 6px">${ev.name}</h3><p class="muted">${ev.text}</p>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px">
+          ${ev.choices.map((c, i) => `<button class="btn-p" data-c="${i}">${c.label}${c.check ? `（${({ jing: '精', qi: '气', shen: '神' })[c.check.attr]} · ${pctText(SQS.checkP(bind(), c.check.attr, c.check.dc))}）` : ''}</button>`).join('')}
+        </div><p class="dim mini" style="margin-bottom:0">选择后将载入见闻，此心不可回改。</p>`
+      $('modal').classList.add('on')
+      $('modal-box').querySelectorAll('[data-c]').forEach((b) => b.addEventListener('click', () => {
+        const branch = ev.choices[+b.dataset.c]
+        SQ.mutate(state, (s) => { const w = s.worlds[s.profile.worldId]; w.__worldId = s.profile.worldId; SQS.resolveChoice(s, w, ev, branch, []) }).then(() => { $('modal').classList.remove('on'); renderMain() })
+      }))
+    }
+    function pctText(p) { return p >= 0.85 ? '十拿九稳' : p >= 0.65 ? '十之七八' : p >= 0.45 ? '五五之数' : p >= 0.25 ? '渺茫' : '九死一生' }
+    function showTrib(t) {
+      const el = $('trib')
+      el.className = t.success ? 'on ok' : 'on no'
+      $('trib-msg').innerHTML = t.success
+        ? `渡劫成功<br>晋升「${t.realmName}」<br><span style="font-size:14px">功法重修，栏位犹在</span>`
+        : `天雷落下<br>渡劫失败<br><span style="font-size:14px">灵气受损 -${H.fmt(t.lost)}（成功率 ${t.p}%）</span>`
+      setTimeout(() => el.classList.remove('on'), 2000)
+      el.addEventListener('click', () => el.classList.remove('on'), { once: true })
+    }
+    let toastTimer = null
+    function toast(msg) {
+      const el = $('toast'); el.textContent = msg; el.style.display = 'block'
+      clearTimeout(toastTimer); toastTimer = setTimeout(() => { el.style.display = 'none' }, 3000)
+    }
+
+    // ---------- Tab 切换 ----------
+    document.getElementById('tabs').querySelectorAll('button').forEach((b) => {
+      b.addEventListener('click', () => {
+        curTab = b.dataset.t
+        document.getElementById('tabs').querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b))
+        document.querySelectorAll('.tab').forEach((t) => t.classList.toggle('on', t.id === 'tab-' + curTab))
+      })
+    })
+    $('cu-detail-toggle').addEventListener('click', () => { const d = $('cu-detail'); d.style.display = d.style.display === 'none' ? 'block' : 'none' })
+    $('cu-trib-detail-toggle').addEventListener('click', () => { const d = $('cu-trib-detail'); d.style.display = d.style.display === 'none' ? 'block' : 'none' })
+    document.querySelectorAll('.tab').forEach((t) => t.classList.toggle('on', t.id === 'tab-culti'))
+
+    // ---------- 修行页卡片排序（拖拽 + 持久化） ----------
+    const UI_KEY = 'sanqian-ui-v1'
+    async function uiStoreGet() {
+      try { if (window.xhub && window.xhub.storage) return await window.xhub.storage.get(UI_KEY) } catch (e) { /* 降级 */ }
+      try { const raw = localStorage.getItem(UI_KEY); return raw == null ? null : JSON.parse(raw) } catch (e) { return null }
+    }
+    async function uiStoreSet(v) {
+      try { if (window.xhub && window.xhub.storage) { await window.xhub.storage.set(UI_KEY, v); return } } catch (e) { /* 降级 */ }
+      try { localStorage.setItem(UI_KEY, JSON.stringify(v)) } catch (e) {}
+    }
+    function applyCardOrder(order) {
+      if (!Array.isArray(order) || !order.length) return
+      const grid = document.querySelector('.sub-grid')
+      if (!grid) return
+      const map = {}
+      for (const c of grid.querySelectorAll('.panel[data-card]')) map[c.dataset.card] = c
+      for (const k of order) if (map[k]) grid.appendChild(map[k]) // 依序重挂 = 重排
+    }
+    function currentCardOrder() {
+      return [...document.querySelectorAll('.sub-grid > .panel[data-card]')].map((c) => c.dataset.card)
+    }
+    function bindCardDnD() {
+      const grid = document.querySelector('.sub-grid')
+      if (!grid) return
+      let dragging = null
+      grid.querySelectorAll('.panel[data-card]').forEach((card) => {
+        card.addEventListener('dragstart', (e) => {
+          dragging = card; card.classList.add('dragging')
+          try { e.dataTransfer.setData('text/plain', card.dataset.card); e.dataTransfer.effectAllowed = 'move' } catch (err) {}
+        })
+        card.addEventListener('dragend', () => {
+          card.classList.remove('dragging'); dragging = null
+          uiStoreSet({ cardOrder: currentCardOrder() }) // 落位即存，下次启动保持
+        })
+        card.addEventListener('dragover', (e) => {
+          e.preventDefault()
+          if (!dragging || dragging === card) return
+          const r = card.getBoundingClientRect()
+          const dx = e.clientX - (r.left + r.width / 2)
+          const dy = e.clientY - (r.top + r.height / 2)
+          const after = Math.abs(dx) > Math.abs(dy) ? dx > 0 : dy > 0 // 双列按主导轴判定前后
+          grid.insertBefore(dragging, after ? card.nextSibling : card)
+        })
+      })
+    }
+
+    boot()
+  </script>
+</body>
+</html>

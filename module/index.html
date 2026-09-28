@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>三千世界</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: var(--xhub-text-1, #1f2230); --ink2: var(--xhub-text-2, #5b6070); --ink3: var(--xhub-text-3, #9298a8);
+      --line: var(--xhub-border, rgba(0,0,0,0.1)); --acc: var(--xhub-accent, #8a6d1d);
+      --well: var(--xhub-bg-card, rgba(255,255,255,0.9));
+      --kr: var(--xhub-yellow, #b8860b); --ke: var(--xhub-red, #c0392b); --kn: var(--xhub-text-3, #8a8f9c);
+    }
+    :root[data-xhub-theme="dark"] {
+      color-scheme: dark;
+      --ink: var(--xhub-text-1, #e8e9f0); --ink2: var(--xhub-text-2, #a2a7b8); --ink3: var(--xhub-text-3, #6f7484);
+      --line: var(--xhub-border, rgba(255,255,255,0.12)); --acc: var(--xhub-accent, #d4af37);
+      --well: var(--xhub-bg-card, rgba(255,255,255,0.04));
+    }
+    html, body { height: 100%; }
+    body {
+      margin: 0; padding: 12px; box-sizing: border-box; background: transparent; color: var(--ink);
+      font-family: system-ui, "Songti SC", SimSun, serif; font-size: 13px;
+      container-type: size; overflow: hidden; cursor: pointer;
+      display: flex; flex-direction: column; justify-content: space-between; gap: 4px;
+    }
+    .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .wt { font-weight: 650; letter-spacing: 1px; font-size: clamp(11px, 12cqh, 14px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .who { font-size: clamp(10px, 10cqh, 12px); color: var(--ink2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .qi { font-size: clamp(16px, 26cqh, 30px); font-weight: 650; line-height: 1.1; font-variant-numeric: tabular-nums; }
+    .bar { height: 4px; border-radius: 2px; background: var(--well); border: 1px solid var(--line); overflow: hidden; flex: none; }
+    .bar > i { display: block; height: 100%; width: 0; background: var(--acc); }
+    .sub { font-size: clamp(10px, 10cqh, 11px); color: var(--ink3); }
+    .badge { font-size: clamp(10px, 10cqh, 11px); white-space: nowrap; }
+  </style>
+</head>
+<body>
+  <div class="row"><span class="wt" id="world">--</span><span class="badge" id="karma"></span></div>
+  <div class="who" id="who">--</div>
+  <div class="qi" id="qi">--</div>
+  <div class="bar"><i id="bar"></i></div>
+  <div class="row sub"><span id="realm">--</span><span id="stones">--</span></div>
+
+  <script src="../assets/core.js"></script>
+  <script src="../assets/systems/engine.js"></script>
+  <script src="../assets/talents/common.js"></script>
+  <script src="../assets/talents/xiuxian.js"></script>
+  <script src="../assets/events/common.js"></script>
+  <script src="../assets/worlds/xiuxian/data.js"></script>
+  <script src="../assets/worlds/xiuxian/treasures.js"></script>
+  <script src="../assets/worlds/xiuxian/events.js"></script>
+  <script src="../assets/worlds/xiuxian/karma.js"></script>
+  <script src="../assets/worlds/xiuxian/index.js"></script>
+  <script src="../assets/worlds/registry.js"></script>
+  <script>
+    const SQ = window.SQ, H = window.SQH
+    let state = null
+    async function boot() {
+      try {
+        const loaded = await SQ.load()
+        state = loaded.state
+        render()
+      } catch (e) { document.getElementById('who').textContent = '读档失败：' + (e.message || e); return }
+      SQ.bindPagehideSave(state)
+      setInterval(async () => { await SQ.claim(state); render() }, 3000)
+    }
+    function render() {
+      const $ = (id) => document.getElementById(id)
+      if (!SQ.created(state)) {
+        $('world').textContent = '三千世界'
+        $('who').textContent = '点击开启新生'
+        $('qi').textContent = '--'; $('bar').style.width = '0%'
+        $('realm').textContent = ''; $('stones').textContent = ''; $('karma').textContent = ''
+        return
+      }
+      const ws = state.worlds[state.profile.worldId]
+      ws.__worldId = state.profile.worldId; ws.__profile = state.profile
+      const pack = SQ.getPack(state.profile.worldId)
+      $('world').textContent = `三千世界 · ${state.profile.worldName}`
+      $('who').textContent = `${state.profile.name} · ${pack.realms[ws.realm].name}`
+      $('qi').textContent = H.fmt(ws.qi)
+      $('bar').style.width = H.clamp(ws.qi / SQS.qiCap(state, ws) * 100, 0, 100) + '%'
+      $('realm').textContent = '修为'
+      $('stones').textContent = `灵蕴 ${H.fmt(ws.lingyun || 0)} · 灵石 ${H.fmt(ws.stones)}`
+      const kt = pack.karmaTier(ws.karma || 0)
+      const kb = $('karma')
+      kb.textContent = kt === 'right' ? '☯正' : kt === 'evil' ? '☠魔' : '·左'
+      kb.style.color = kt === 'right' ? 'var(--kr)' : kt === 'evil' ? 'var(--ke)' : 'var(--kn)'
+    }
+    document.body.addEventListener('click', () => {
+      if (window.xhub && window.xhub.runtime && window.xhub.runtime.open) {
+        try { window.xhub.runtime.open('view') } catch (e) {}
+      }
+    })
+    boot()
+  </script>
+</body>
+</html>
