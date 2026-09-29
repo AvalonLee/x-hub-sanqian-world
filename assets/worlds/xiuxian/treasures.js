@@ -51,7 +51,7 @@
       scaled: { 'hook:on_stash_cap': [24, 24], 'mult:eventRate': [0.30, 0.30], 'hook:on_event_stones': [1.0, 1.0] } },
     { id: 'x09', name: '补天五色石', kind: 'xian', grade: '先天·上品',
       reqs: { realm: 3, attrs: { qi: 24 } },
-      desc: '续命：每境界一次，渡劫失败不计入Attempts且修为损失减半；突破后方复原。',
+      desc: '续命：每境界一次，渡劫失败不计入天数且修为损失减半；突破后方复原。',
       obtain: '雷池禁地首通',
       scaled: {}, special: 'budou' },
     { id: 'x10', name: '造化玉牒', kind: 'xian', grade: '先天·极品',

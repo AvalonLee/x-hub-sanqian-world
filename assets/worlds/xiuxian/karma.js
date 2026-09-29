@@ -124,7 +124,7 @@
     const { p, parts } = tribulationP(s, ws)
     const tr = ws.treasures
     const hasT = (id) => window.SQXT && window.SQXT.has(ws, id)
-    // X09 补天：每境界一次，失败免计（不计 Attempts 且损失减半）
+    // X09 补天：每境界一次，失败免计（不计入天数且损失减半）
     const budou = !!(tr && hasT('x09') && tr.budouRealm !== ws.realm)
     const success = Math.random() < p
     if (success || !budou) ws.tribulation.attempts++
