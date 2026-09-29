@@ -1,11 +1,11 @@
 # 三千世界 · AI 助手交接文档
 
-> **写给接手的 AI 助手**：读完本文档 + 指定必读文件，即可在不破坏既有约定的前提下继续开发。生成于 2026-09-28 晚，对应实装版本 **v0.4.0**。
+> **写给接手的 AI 助手**：读完本文档 + 指定必读文件，即可在不破坏既有约定的前提下继续开发。生成于 2026-09-28 晚，2026-09-29 增补修订（P1/P2 收口），对应实装版本 **v0.4.2**。
 
 | 项目 | 内容 |
 |---|---|
 | 扩展 | `extensions/com.avalonlee.sanqian-world/`（三千世界 · 多世界放置 RPG 引擎 + 玄幻修仙首发世界） |
-| 当前版本 | manifest **0.4.0**（UI 与内容已远超 manifest 号的历史，版本号自 v0.3.2 起严格对齐 DESIGN-ADDENDUM 编号） |
+| 当前版本 | manifest **0.4.2**（版本号自 v0.3.2 起严格对齐 docs/change 编号；v0.4.1/v0.4.2 曾漏 bump，2026-09-29 对齐补正，对齐规则见工程规范 §7.1） |
 | 宿主 | x-hub **官方 v0.7.0**（便携模式运行于工作区根 `E:\下载\xhub`），桥 API 以 `runtime.info().capabilities` 为准 |
 | 本期目标（用户拍板） | **先跑通打磨好第一个世界（玄幻修仙）的用户体验；后续只需扩展世界包内容即可** |
 
@@ -26,7 +26,7 @@
 3. **读改写结算模型（核心架构）**：`claim`/`mutate` 均为「**读最新持久态 → 变更 → 落盘 → Object.assign 回灌本地**」——module/view 同开不互冲不双计。任何跨 claim 的状态变更**必须走 `SQ.mutate`**，直接改内存对象会被下次 RMW 覆盖。
 4. **karma/attrs 是缓存值**：任何变更后由 `recalcDerived` 覆盖式重算（写进 `karmaEventScore` 等分量，不直接改 karma）。
 5. 测试纪律：冒烟测试文件放 `.workbuddy/tmp/`（**勿放扩展目录**，防发布打包带入）；workspace 是 ESM，Node 脚本须 `.cjs`。
-6. **变更留痕（强制）**：本扩展目录内一切进仓文件的变动，都必须按日落到 `docs/change/YYYY-MM-DD.md`——同日追加、隔日新建、跨天归入完成当日；条目须含「变更文件前后值 + 可执行回退指引」。规则正典见 `docs/change/README.md`，登记入口见工程规范 §九。**注意**：扩展目录尚未纳入 git，回退靠条目内记录手工还原。
+6. **变更留痕（强制）**：本扩展目录内一切进仓文件的变动，都必须按日落到 `docs/change/YYYY-MM-DD.md`——同日追加、隔日新建、跨天归入完成当日；条目须含「变更文件前后值 + 可执行回退指引」。规则正典见 `docs/change/README.md`，登记入口见工程规范 §九。**注意**：扩展目录已建**独立 git 仓库**（2026-09-28 启用），回退首选 `git revert`（commit 短哈希在各条目内）；pre-commit 钩子强制当日留痕。
 
 ## 三、环境与工具链事实
 
@@ -36,7 +36,7 @@
   - `node E:/下载/xhub/.workbuddy/tmp/sq-treasure-smoke.cjs` —— 法宝专项 32 项；
   - `node E:/下载/xhub/.workbuddy/tmp/sq-view-check.cjs` —— view 静态对账（ID 引用/Tab 覆盖/初始 `on`/零外链）。
 - 加载脚本顺序（view/module 一致）：core → engine → talents → events → data → **treasures** → world events → karma → index → registry → naming。
-- git：`extensions/com.avalonlee.sanqian-world/` **尚未纳入 git 库**；工作区 git 有 PortableGit 引用写入缺陷（clone/refs/remotes 不可用，详见用户级 MEMORY.md），推送走「镜像 push 法」。
+- git：扩展目录为**独立 git 仓库**（分支 `main`，远端 `origin` = `https://github.com/AvalonLee/x-hub-sanqian-world.git` 公开库备份；pre-commit 钩子强制变更留痕）；父工作区 git 有 PortableGit 引用写入缺陷（clone/refs/remotes 不可用，详见用户级 MEMORY.md），但**不影响本仓库**；本机直连 GitHub 需 `-c http.sslBackend=openssl`。
 
 ## 四、当前实装状态（v0.4.0 全景）
 
@@ -73,6 +73,8 @@
 | v0.3.3 | 战力取整；属性/天赋/秘境/功法改**常显卡片**（取消折叠）；秘境 `.zcard`/功法 `.slot` 网格 | 用户需求 |
 | v0.3.4 | **卡片拖拽排序**（主导轴判定，持久化 `sanqian-ui-v1`）；**坊市开局即上架**（根因：initialState `nextRestock:0` 永不触发 shopTick，创角内直接 shopRestock + 旧档自愈）；法宝页/坊市页卡片化；**设置页**（陆），重置迁入 | 用户需求 |
 | **v0.4.0** | **法宝（灵宝）系统全量**：30 件 treasures.js + SQXT 聚合器；法器更名；新「叁法宝」页；渡劫/战斗/坊市/黑市全链路接入；**连带修两个真 Bug**（见 §六） | 用户上传《法宝全录（30件）》 |
+| v0.4.1 | 修行页**天赋标签墙**（汇总行 + chip 网格 + 详情区）；功法**散功/弃置**处置（防套利，shelf 容量 24 升为实装强制） | P5 打磨 |
+| v0.4.2 | **日志双通道收口**：法器/坊市分类补 `pushLog` 写入点（此前恒空），上限 50→200 | 实测 |
 
 ## 六、已修复缺陷档案（防再踩；均有冒烟覆盖）
 
@@ -93,13 +95,8 @@ UI 改动另需宿主内真机三档目检：宽窗双栏 / 窄窗折叠 / 透�
 
 ## 八、遗留事项（接手者优先级排序）
 
-1. **docs/ 目录校对回写（已通读、未回写——最直接的接手点）**：上轮会话已通读全部 9 份主干 + 玄幻修仙子卷，确认 docs 整体停留在 v0.2.x 前口径，与 v0.4.0 实装的主要差异：
-   - 主设计文档 §七：渡劫仍写「挂机自动渡劫」（实装=**用户确认制**+daoGift 三选一）；§五 存档缺 `lingyun/mode/treasures/karmaEventScore/tribNext/nextNeedMod` 等字段；§3.3 词表矩阵「法宝」未更名「法器」；§八 目录结构（lexicon.js/systems 拆分文件名）与实际（单 engine.js + worlds/xiuxian/*）不符；
-   - 数值详设 §一：离线上限写 12h ✓ 但「渡劫为自动掷判」等口径待改；§四 功法升级仍写「灵石消耗」（实装=**灵蕴**）；§3.3 标题「G4 装备（法宝）」→法器；法宝系统未收录（以 ADDENDUM §十四为准）；§八 乘区总表缺「法宝」来源列；
-   - 工程规范：存档字段总表缺 v0.2.0+ 新字段（lingyun/mode/shop.nextRestock 语义/treasures 全套/sanqian-ui-v1 UI 键）；manifest 示例仍 0.1.0；挂点白名单 15 项需 +法宝实际用点（on_crit_kill/on_lockling/on_kill_karma/on_stash_cap/on_event_stones/on_offline_combat/on_choice_cd 等实装挂点）；
-   - UI 设计文档：仍写「底部 6 Tab / 顶栏点击浮层 / 收功按钮 / 自动渡劫演出」，实装为**双栏侧边导航六 Tab、无收功按钮、确认制渡劫**；v0.3.1~0.3.4 的卡片化/拖拽/设置页未收录；
-   - 回写策略建议：按 DESIGN-ADDENDUM 十四节逐条合回各主文档（其前言即预约了此操作），合完可将 ADDENDUM 标注「已合回」。
-2. **八处与《法宝全录》文档的偏差**（ADDENDUM §十四登记）：H02/H08/H11/H12/H18/X04/X06/X10 简化或未实装——P6 前决定补齐或改文档。
+1. ~~docs/ 目录校对回写~~ **已完成（2026-09-28）**：v0.2.0~v0.4.0 全部增量规则已合回四份核心文档与世界子文档（主设计 v2.5 / 数值详设 v1.10 / 工程规范 v1.14 / UI 设计 v2.2），`DESIGN-ADDENDUM.md` 标注「已合回」，仅作溯源。
+2. ~~八处《法宝全录》文档偏差~~ **已裁决（2026-09-29）**：H02/H08/H11/H12/H18/X04/X06/X10 全部按「改文档定案」收口，定案口径见《法宝全录（30件）》v1.2 §八 裁决记录；无代码欠账，翻案路径同节已留。
 3. **P6 古武军势**（第二世界，docs/古武军势/ 四卷设计已备）：验证「不改 systems/ 即接入新世界」的抽象金标准；世界包契约见工程规范 §二。
 4. 用户已表态的本期边界：**打磨第一世界体验为先**，世界包扩展（含 P6）非本期。
 
