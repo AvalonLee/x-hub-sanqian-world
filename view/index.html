@@ -157,7 +157,10 @@
       .p-status { grid-area: status; } .p-qi { grid-area: qi; } .p-trib { grid-area: trib; }
     }
     .qi-label { font-size: 12px; color: var(--ink3); letter-spacing: 3px; text-align: center; }
-    .qi-big { font-size: 26px; font-weight: 650; margin: 6px 0; text-align: center; font-variant-numeric: tabular-nums; }
+    .qi-big { font-size: 36px; font-weight: 750; margin: 8px 0; text-align: center; font-variant-numeric: tabular-nums; color: var(--acc); letter-spacing: 1px; line-height: 1.15; text-shadow: 0 1px 0 rgba(128,128,128,0.12); }
+    .qi-big.bump { animation: qi-bump 0.45s ease; }
+    @keyframes qi-bump { 0% { transform: scale(1); } 35% { transform: scale(1.06); } 100% { transform: scale(1); } }
+    #cu-rate { color: var(--acc); font-size: 14px; }
     .qi-center { text-align: center; }
 
     /* 修行页分区卡片（属性/天赋/秘境/功法 常显，宽屏两列） */
@@ -180,13 +183,18 @@
     #shop-list { display: grid; gap: 8px; grid-template-columns: 1fr; }
     @media (min-width: 880px) { #shop-list { grid-template-columns: 1fr 1fr; } }
 
-    /* 属性总览卡 */
+    /* 属性总览卡（v0.4.3 两段式：战力主数字 + 精气神副行） */
     .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+    .stats.three { grid-template-columns: repeat(3, 1fr); }
     .stat { background: var(--well); border: 1px solid var(--line); border-radius: 10px; padding: 10px 6px; text-align: center; }
     .stat .k { font-size: 11px; color: var(--ink3); letter-spacing: 2px; }
     .stat .v { font-size: 20px; font-weight: 650; margin: 3px 0 2px; font-variant-numeric: tabular-nums; }
     .stat .s { font-size: 10px; color: var(--ink3); }
-    @media (max-width: 640px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+    .power-hero { text-align: center; padding: 10px 0 12px; margin-bottom: 10px; border-bottom: 1px dashed var(--line); }
+    .power-hero .k { font-size: 11px; color: var(--ink3); letter-spacing: 4px; }
+    .power-hero .v { font-size: 42px; font-weight: 750; color: var(--acc); margin: 4px 0 2px; font-variant-numeric: tabular-nums; line-height: 1.1; }
+    .power-hero .s { font-size: 10px; color: var(--ink3); letter-spacing: 1px; }
+    @media (max-width: 640px) { .stats { grid-template-columns: repeat(2, 1fr); } .stats.three { grid-template-columns: repeat(3, 1fr); } }
 
     /* 品阶色 */
     .t0 { color: var(--t0); } .t1 { color: var(--t1); } .t2 { color: var(--t2); } .t3 { color: var(--t3); } .t4 { color: var(--t4); }
@@ -294,8 +302,12 @@
         <div class="sub-grid">
           <div class="panel" data-card="attrs" draggable="true">
             <div class="sec-head">角色 · 属性<span class="sh-grip" style="margin-left:auto" title="拖动调整卡片顺序">⠿</span></div>
-            <div class="stats">
-              <div class="stat"><div class="k">战力</div><div class="v" id="ro-atk">--</div><div class="s">境界 + 法器</div></div>
+            <div class="power-hero">
+              <div class="k">战 力</div>
+              <div class="v" id="ro-atk">--</div>
+              <div class="s">境界 + 法器 · 精 +0.1%/点</div>
+            </div>
+            <div class="stats three">
               <div class="stat"><div class="k">精</div><div class="v" id="ro-jing">--</div><div class="s">主战力判定</div></div>
               <div class="stat"><div class="k">气</div><div class="v" id="ro-qi">--</div><div class="s">主修为判定</div></div>
               <div class="stat"><div class="k">神</div><div class="v" id="ro-shen">--</div><div class="s">主心志判定</div></div>
@@ -303,7 +315,7 @@
             <div class="mini dim" id="ro-attrs-note" style="margin-top:6px"></div>
           </div>
           <div class="panel" data-card="talents" draggable="true">
-            <div class="sec-head">天赋<span class="sh-hint mini dim">创角锁定 + 天道垂青，永久生效</span><span class="sh-grip" title="拖动调整卡片顺序">⠿</span></div>
+            <div class="sec-head">天赋<span class="sh-grip" style="margin-left:auto" title="拖动调整卡片顺序">⠿</span></div>
             <div id="ro-talents"></div>
           </div>
           <div class="panel" data-card="zones" draggable="true">
@@ -327,7 +339,7 @@
           <div class="slots" id="gear-slots"></div>
         </div>
         <div class="panel" id="stash-panel" style="display:none">
-          <div class="sec-head">库藏阁<span class="sh-hint mini dim">境界不足暂存 · 容量 12 · 突破后自动复检</span></div>
+          <div class="sec-head">库藏阁<span class="sh-hint mini dim">境界不足暂存 · 容量 12 · 突破后自动复检佩戴</span></div>
           <div class="slots" id="gear-stash"></div>
         </div>
       </div>
@@ -574,7 +586,7 @@
       $('tb-name').textContent = `${state.profile.name} @ ${state.profile.worldName} · ${p.realms[ws.realm].name}`
       const kt = p.karmaTier(ws.karma || 0)
       const kb = $('tb-karma')
-      kb.textContent = `${kt === 'right' ? '正道' : kt === 'evil' ? '魔道' : '左道'} ${ws.karma >= 0 ? '+' : ''}${ws.karma}`
+      kb.textContent = `业力 ${ws.karma >= 0 ? '+' : ''}${ws.karma} · ${kt === 'right' ? '正道' : kt === 'evil' ? '魔道' : '左道'}`
       kb.className = 'chip ' + (kt === 'right' ? 'kr-r' : kt === 'evil' ? 'kr-e' : 'kr-n')
       $('tb-lingyun').textContent = `灵蕴 ${H.fmt(ws.lingyun || 0)}`
       $('tb-stones').textContent = `灵石 ${H.fmt(ws.stones)}`
@@ -636,7 +648,13 @@
       const p = pack()
       const cap = SQS.qiCap(state, ws)
       const rate = SQS.qiRate(state, ws)
-      $('cu-qi').textContent = H.fmt(ws.qi)
+      const qiEl = $('cu-qi')
+      const qiText = H.fmt(ws.qi)
+      if (qiEl.dataset.v !== qiText) { // 数值变化 → 脉冲一次（v0.4.3 增长感强化，纯视觉）
+        qiEl.dataset.v = qiText
+        qiEl.classList.remove('bump'); void qiEl.offsetWidth; qiEl.classList.add('bump')
+      }
+      qiEl.textContent = qiText
       $('cu-bar').style.width = H.clamp(ws.qi / cap * 100, 0, 100) + '%'
       $('cu-cap').textContent = `上限 ${H.fmt(cap)}`
       $('cu-rate').textContent = H.fmt(rate) + '/秒'
@@ -648,7 +666,7 @@
         $('cu-need').textContent = `还需 ${H.fmt(Math.max(0, need - ws.qi))} 修为`
         const tp = p.tribulationP(state, ws)
         $('cu-p').textContent = Math.round(tp.p * 100) + '%'
-        $('cu-trib-detail').textContent = `base ${Math.round(tp.parts.base * 100)}% + 抗性 ${Math.round(tp.parts.resistPart * 100)}% + 战力 ${Math.round(tp.parts.powerPart * 100)}% + 天赋 ${Math.round(tp.parts.talent * 100)}% + 业力 ${Math.round(tp.parts.km * 100)}%${tp.parts.tre ? ' + 法宝 ' + Math.round(tp.parts.tre * 100) + '%' : ''}${tp.parts.next ? ' + 器物 ' + Math.round(tp.parts.next * 100) + '%' : ''}（封顶 95%）`
+        $('cu-trib-detail').textContent = `根基 ${Math.round(tp.parts.base * 100)}% + 抗性 ${Math.round(tp.parts.resistPart * 100)}% + 战力 ${Math.round(tp.parts.powerPart * 100)}% + 天赋 ${Math.round(tp.parts.talent * 100)}% + 业力 ${Math.round(tp.parts.km * 100)}%${tp.parts.tre ? ' + 法宝 ' + Math.round(tp.parts.tre * 100) + '%' : ''}${tp.parts.next ? ' + 器物 ' + Math.round(tp.parts.next * 100) + '%' : ''}（封顶 95%）`
         btn.disabled = ws.qi < need
         btn.textContent = ws.qi >= need ? `渡劫突破 → ${next.name}` : `渡劫突破（修为未满）`
       } else {
@@ -657,7 +675,8 @@
         btn.disabled = true; btn.textContent = '已臻化境'
       }
       const at = ws.attrs || {}
-      $('cu-detail').innerHTML = `境界基础 ×1 ｜ 天赋 Σ${Math.round(SQS.zoneSum(state, ws, 'qiRate') * 100)}% ｜ 阵营 ×${p.alignmentQiMult(ws)}${(ws.buffs || []).filter((b) => b.field === 'qiRate' && b.until > Date.now()).length ? ' ｜ 限时 buff 生效中' : ''}　·　精 ${at.jing || 0} 气 ${at.qi || 0} 神 ${at.shen || 0}`
+      const zoneSum = SQS.zoneSum(state, ws, 'qiRate')
+      $('cu-detail').innerHTML = `境界基础 ×1 ｜ 天赋 合计 ${zoneSum >= 0 ? '+' : ''}${Math.round(zoneSum * 100)}% ｜ 阵营 ×${p.alignmentQiMult(ws)}${(ws.buffs || []).filter((b) => b.field === 'qiRate' && b.until > Date.now()).length ? ' ｜ 限时灵效生效中' : ''}　·　精 ${at.jing || 0} 气 ${at.qi || 0} 神 ${at.shen || 0}`
       // 双状态
       const cult = ws.mode === 'cultivate'
       $('mode-culti').className = 'mini' + (cult ? ' btn-p' : '')
@@ -732,7 +751,7 @@
         const art = p.arts[id]
         const cost = SQS.artUpgradeCost(state, ws, id)
         const lv = ws.artsLevels[id] || 0
-        return `<div class="slot"><div><b class="a${art.alignment}">${art.name}</b> <span class="mini dim">Lv.${lv}${lv >= 5 ? '（圆满）' : ''}</span></div>
+        return `<div class="slot"><div><b class="a${art.alignment}">${art.name}</b> <span class="mini dim">${(lv || 0) > 0 ? lv + ' 重' : '未入门'}${lv >= 5 ? '（圆满）' : ''}</span></div>
           <div class="mini dim">滋养·${({ j: '精', q: '气', s: '神' })[art.attr]}</div>
           <div class="mini dim">${fxText(art, lv)}</div>
           <div style="margin-top:6px;display:flex;gap:6px">
@@ -750,7 +769,7 @@
         const canSalvage = !slotted && !art.noSalvage
         return `<div class="slot"><div class="zc-head"><b class="a${art.alignment}">《${art.name}》</b>
           <span class="mini dim">${({ r: '正道', e: '魔道', n: '左道' })[art.alignment]} · 滋养${({ j: '精', q: '气', s: '神' })[art.attr]}${sig ? ' · ' + sig : ''}</span></div>
-          <div class="mini dim">Lv.${ws.artsLevels[id] || 0} · ${fxText(art, ws.artsLevels[id] || 0)}</div>
+          <div class="mini dim">${(ws.artsLevels[id] || 0) > 0 ? (ws.artsLevels[id] || 0) + ' 重' : '未入门'} · ${fxText(art, ws.artsLevels[id] || 0)}</div>
           <div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap">${slotted ? '<span class="mini dim">槽内生效中</span>' : `<button class="mini" data-in="${id}" ${ws.slots.includes(null) ? '' : 'disabled'}>装入空槽</button>`}${canSalvage ? `<button class="mini" data-salvage="${id}">散功 +${H.fmt(SQS.artSalvageValue(art, ws.artsLevels[id] || 0))}</button>` : ''}</div></div>`
       }
       $('arts-owned').innerHTML = ws.artsKnown.length ? byTier.map((ids, tier) => !ids.length ? '' :
@@ -934,8 +953,34 @@
           <div class="mini dim">评分 ${Math.round(SQS.score(it))}</div></div>`
       }).join('')
       $('stash-panel').style.display = ws.stash.length ? 'block' : 'none'
-      $('gear-stash').innerHTML = '<div class="slots">' + ws.stash.map((it) => `<div class="slot"><div class="zc-head"><b class="t${it.tier}">${it.name}</b> <span class="mini dim">${p.gearTiers[it.tier].name}</span>${it.special ? ` <span class="mini t4">◆ ${p.gearSpecials[it.special].name}</span>` : ''}</div>
-        <div class="mini stale">需境界：${realmName(it.reqs.realm)}（现 ${realmName(ws.realm)}）</div></div>`).join('') + '</div>'
+      // v0.4.3：状态两路——未达标红字 / 已达标灰字（评分低于现装）+「换上」手动装备出口
+      $('gear-stash').innerHTML = '<div class="slots">' + ws.stash.map((it, idx) => {
+        const met = it.reqs.realm <= ws.realm || it.special === 'ignore_req'
+        const cur = ws.gear[it.slot]
+        const status = met
+          ? `<div class="mini dim">已达标 · 评分 ${Math.round(SQS.score(it))}${cur ? `（现装 ${Math.round(SQS.score(cur))}）` : ''}，可手动换上${cur ? '，旧件将炼化' : ''}</div>`
+          : `<div class="mini stale">需境界：${realmName(it.reqs.realm)}（现 ${realmName(ws.realm)}）</div>`
+        return `<div class="slot"><div class="zc-head"><b class="t${it.tier}">${it.name}</b> <span class="mini dim">${p.gearTiers[it.tier].name}</span>${it.special ? ` <span class="mini t4">◆ ${p.gearSpecials[it.special].name}</span>` : ''}</div>
+        <div class="mini dim">攻 ${it.atk}${it.qiBonus ? ` · 灵 +${Math.round(it.qiBonus * 100)}%` : ''}${it.resist ? ` · 抗 ${it.resist}` : ''}${it.attrValue ? ` · ${({ jing: '精', qi: '气', shen: '神' })[it.attrValue.attr]} +${it.attrValue.value}` : ''}</div>
+        ${status}
+        ${met ? `<div style="margin-top:6px"><button class="mini" data-wear="${idx}">换上</button></div>` : ''}</div>`
+      }).join('') + '</div>'
+      $('gear-stash').querySelectorAll('[data-wear]').forEach((b) => b.addEventListener('click', () => {
+        SQ.mutate(state, (s) => {
+          const w = s.worlds[s.profile.worldId]
+          const it = w.stash[+b.dataset.wear]
+          if (!it || it.reqs.realm > w.realm) return
+          const cur = w.gear[it.slot]
+          if (cur) {
+            const v = SQS.salvage(s, w, cur)
+            H.pushLog(w, `换上 ${it.name}，旧件 ${cur.name} 炼化 +${v} 灵石`, 'gear')
+          } else {
+            H.pushLog(w, `换上 ${it.name}`, 'gear')
+          }
+          w.gear[it.slot] = it
+          w.stash.splice(+b.dataset.wear, 1)
+        }).then(renderMain)
+      }))
     }
 
     function renderShop(ws) {
@@ -961,7 +1006,7 @@
           const art = p.arts[g.artId]
           const price = SQS.artShopPrice(state, ws, art, art.alignment === 'e')
           return `<div class="goods"><b class="a${art.alignment}">《${art.name}》</b> <span class="mini dim">${({ r: '正道', e: '魔道', n: '左道' })[art.alignment]}功法${g.black ? ' · 黑市' : ''}</span>
-            <div class="mini dim">每级 ${Object.keys(art.fx).map((k) => k + ' +' + Math.round(art.fx[k] * 100) + '%').join('，')}</div>
+            <div class="mini dim">每级 ${Object.entries(art.fx).map(([k, v]) => `${FX_NAMES[k] || k} +${Math.round(v * 100)}%`).join('，')}</div>
             <div class="row" style="border-top:none;padding-top:6px"><span class="mini muted">${H.fmt(price)} 灵石</span><button class="mini btn-p" data-buy="${i}" ${ws.stones < price ? 'disabled' : ''}>购入</button></div></div>`
         }
         if (g.kind === 'treasure') {
@@ -1006,7 +1051,7 @@
       if (wsb.qi < need) return
       const tp = p.tribulationP(state, wsb)
       $('modal-box').innerHTML = `<h3 style="margin:0 0 8px">渡劫突破 → ${next.name}</h3>
-        <p class="muted">成功率 <b>${Math.round(tp.p * 100)}%</b>（base ${Math.round(tp.parts.base * 100)}% + 抗性 ${Math.round(tp.parts.resistPart * 100)}% + 战力 ${Math.round(tp.parts.powerPart * 100)}% + 天赋 ${Math.round(tp.parts.talent * 100)}% + 业力 ${Math.round(tp.parts.km * 100)}%${tp.parts.tre ? ' + 法宝 ' + Math.round(tp.parts.tre * 100) + '%' : ''}，封顶 95%）</p>
+        <p class="muted">成功率 <b>${Math.round(tp.p * 100)}%</b>（根基 ${Math.round(tp.parts.base * 100)}% + 抗性 ${Math.round(tp.parts.resistPart * 100)}% + 战力 ${Math.round(tp.parts.powerPart * 100)}% + 天赋 ${Math.round(tp.parts.talent * 100)}% + 业力 ${Math.round(tp.parts.km * 100)}%${tp.parts.tre ? ' + 法宝 ' + Math.round(tp.parts.tre * 100) + '%' : ''}，封顶 95%）</p>
         <p class="mini dim">成功：晋升境界，修为清零，功法保留，天道垂青赐下三选一天赋。<br>失败：修为受损（约 -${Math.round((1 - SQX_KARMA.tribFailFactor(state, wsb)) * 100)}%），境界不变。</p>
         <div style="display:flex;gap:8px;margin-top:12px"><button id="m-cancel" class="grow">再等等</button><button id="m-ok" class="btn-p">引动天劫</button></div>`
       $('modal').classList.add('on')

@@ -43,8 +43,13 @@
       return `${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`
     },
     pushLog(ws, msg, tag) {
-      // 上限 200（v0.4.2）：原 50 条下，低频条目（奇遇 / 渡劫 / 补货）会被高频条目挤出窗口
-      ws.log = [{ t: Date.now(), msg, tag: tag || 'sys' }].concat(ws.log || []).slice(0, 200)
+      // v0.4.3 分类制上限：每分类 ≤200 条（超限剔除该分类最旧一条），全局硬上限 2000——
+      // 原「总量 200」（v0.4.2）下高频分类（sys/trib）仍会把低频分类（event/treasure）挤出窗口
+      tag = tag || 'sys'
+      ws.log = [{ t: Date.now(), msg, tag }].concat(ws.log || [])
+      let seen = 0
+      ws.log = ws.log.filter((e) => e.tag !== tag || ++seen <= 200)
+      if (ws.log.length > 2000) ws.log = ws.log.slice(0, 2000)
     },
     dd(src, def) { // deep-default：按 def 形状补齐 src 缺字段（一层对象 + 基础值）
       const out = src && typeof src === 'object' ? src : {}

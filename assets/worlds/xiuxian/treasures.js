@@ -238,13 +238,13 @@
       'mult:qiRate': '灵气产出', 'mult:qiCap': '灵气上限', 'mult:combatSpeed': '战斗速度',
       'mult:stonesRate': '灵石获取', 'mult:eventRate': '奇遇频率', 'mult:eventLuck': '奇遇幸运',
       'mult:shopCost': '坊市价格', 'mult:offlineEff': '离线收益', 'mult:artsSpeed': '功法修炼',
-      'hook:on_offline_cap_h': '离线上限+小时', 'hook:on_stash_cap': '库藏阁+格',
-      'hook:on_bottleneck_power': '瓶颈战力', 'hook:on_check': '判定+pp',
+      'hook:on_offline_cap_h': '离线上限(小时)', 'hook:on_stash_cap': '库藏阁+格',
+      'hook:on_bottleneck_power': '瓶颈战力', 'hook:on_check': '判定成功率',
       'hook:on_negative_event': '凶事化解率', 'hook:on_refine': '炼化返还',
       'hook:on_shop_refresh': '刷新费减免', 'hook:on_kill_stones': '击杀灵石',
       'hook:on_kill_karma': '每杀业力', 'hook:on_trib_next': '败后渡劫',
       'hook:on_crit_kill': '开天一击率', 'hook:on_lockling': '锁灵率',
-      'hook:on_choice_cd': '直通冷却h', 'hook:on_event_stones': '奇遇灵石×',
+      'hook:on_choice_cd': '选择直通冷却(小时)', 'hook:on_event_stones': '奇遇灵石×',
       'hook:on_offline_combat': '离线战斗+',
     }
     const parts = []

@@ -53,7 +53,7 @@
     ignore_req: { name: '无视佩戴要求', hook: null, value: 0, desc: '佩戴要求全部无效' },
     sword_heart: { name: '剑魄', hook: null, field: 'combatPower', value: 0.08, desc: '战力 +8%' },
     spirit_rune: { name: '聚灵纹', hook: null, field: 'qiRate', value: 0.08, desc: '灵气 +8%' },
-    adamantine: { name: '金刚质', hook: null, value: 0, desc: 'resist +60', resistFlat: 60 },
+    adamantine: { name: '金刚质', hook: null, value: 0, desc: '抗性 +60', resistFlat: 60 },
     swift_shadow: { name: '疾影', hook: null, field: 'combatSpeed', value: 0.10, desc: '战斗速度 +10%' },
     merchant_wit: { name: '商慧', hook: null, field: 'shopCost', value: -0.08, desc: '商店价格 -8%' },
     karma_mirror: { name: '照业镜', hook: null, field: 'eventLuck', value: 0.12, desc: '奇遇多善缘 +12%' },

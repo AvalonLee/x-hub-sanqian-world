@@ -755,7 +755,9 @@
       const shieldIdx = (ws.buffs || []).findIndex((b) => b.field === 'eventShield' && b.until > now)
       if (shieldIdx >= 0) {
         ws.buffs.splice(shieldIdx, 1)
-        ;(res_push(res))({ tag: 'event', msg: `[奇遇] ${ev.name}：幸有护身福泽，凶事化解` })
+        const shieldMsg = `[奇遇] ${ev.name}：幸有护身福泽，凶事化解`
+        ;(res_push(res))({ tag: 'event', msg: shieldMsg })
+        H.pushLog(ws, shieldMsg, 'event') // v0.4.3：化解消耗福泽是状态变更，须落日志（v0.4.0 起仅 toast 的缺口）
         return true
       }
     }
